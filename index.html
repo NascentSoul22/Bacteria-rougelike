@@ -1,0 +1,1322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#120b1e">
+<title>Culture Shock</title>
+<script>
+/* =====================================================================
+   CULTURE SHOCK — ORGANISM DATA TABLE
+   ---------------------------------------------------------------------
+   Edit results here. Every organism needs a value for every column.
+
+   Value codes
+     "+"  positive          "-"  negative
+     "V"  variable (11–89% of strains) — rolled + or − for each patient
+     "NG" no growth on/in that medium
+     "NA" test not applicable to this organism
+     "w"  weak (H2S only)   "late" late lactose fermenter (MacConkey)
+     "25" positive at 25 °C only (motility, VP)
+     "rapid" rapid/strong urease (H. pylori)
+
+   Columns
+     gram   Gram stain shape: rod | curved | seagull | spiral | pin (bipolar "safety pin")
+     oxi    oxidase                cat   catalase
+     mac    MacConkey lactose: + | - | late | V | NG
+     tsi    TSI slant/butt: A/A | K/A | NG      gas  glucose gas    h2s  H2S (+ | w | - | V)
+     ind    indole             cit   Simmons citrate     mot   motility (+ | - | 25)
+     ure    urease (+ | - | rapid)
+     ldc    lysine decarboxylase   odc  ornithine decarboxylase
+     vp     Voges–Proskauer    onpg  ONPG (β-galactosidase)
+     suc    sucrose            man   mannitol           ara   L-arabinose
+     mal    malonate           smac  sorbitol on SMAC   mug   MUG (β-glucuronidase)
+     tcbs   TCBS colony color: Y (yellow) | G (green) | NG
+     nacl   growth in 0% 6% 8% 10% NaCl, space separated (e.g. "- + + -") or "NG"
+     string string test        o129  O/129 150 µg disk: S | R | NA
+     dnase  DNase              hemo  β-hemolysis on blood agar
+     hipp   hippurate hydrolysis   t42  growth at 42 °C
+     nal    nalidixic acid 30 µg: S | R | V   ceph  cephalothin 30 µg: S | I | R | V
+     nit    nitrate reduction
+     shig   Shigella antisera group: A | B | C | D | -
+     salm   Salmonella O group: A | B | C1 | D/Vi | IIIa | -
+
+   Meta
+     floor  "enteric" | "nonenteric"  (Mixed floor uses everything)
+     specimen, hx (clinical vignette), key (study note shown in Codex)
+   ===================================================================== */
+const ORGANISMS = [
+  // ---------------------------- ENTERICS ----------------------------
+  { id:"ecoli", genus:"Escherichia", sp:"coli", floor:"enteric", specimen:"Urine",
+    hx:"Dysuria and frequency in a young woman; >10⁵ CFU/mL of one organism.",
+    key:"Lactose +, indole +, MR+/VP−, citrate −. Sorbitol + on SMAC and MUG + (unlike O157:H7).",
+    gram:"rod", oxi:"-", cat:"+", mac:"+", tsi:"A/A", gas:"+", h2s:"-", ind:"+", cit:"-", mot:"+", ure:"-",
+    ldc:"+", odc:"V", vp:"-", onpg:"+", suc:"V", man:"+", ara:"+", mal:"-", smac:"+", mug:"+",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"V", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"-", salm:"-" },
+
+  { id:"o157", genus:"Escherichia", sp:"coli O157:H7", floor:"enteric", specimen:"Stool",
+    hx:"Bloody diarrhea after an undercooked hamburger; days later the child has low platelets and rising creatinine (HUS).",
+    key:"Looks like ordinary E. coli EXCEPT sorbitol − (colorless on SMAC) and MUG − (no β-glucuronidase). Confirm with O157 antiserum / Shiga toxin.",
+    gram:"rod", oxi:"-", cat:"+", mac:"+", tsi:"A/A", gas:"+", h2s:"-", ind:"+", cit:"-", mot:"+", ure:"-",
+    ldc:"+", odc:"+", vp:"-", onpg:"+", suc:"V", man:"+", ara:"+", mal:"-", smac:"-", mug:"-",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"-", salm:"-" },
+
+  { id:"s_typhi", genus:"Salmonella", sp:"Typhi", floor:"enteric", specimen:"Blood",
+    hx:"Returning traveler with step-ladder fever, relative bradycardia and faint rose spots on the abdomen.",
+    key:"TSI K/A with only a small wisp of H₂S and NO gas. Citrate −, ornithine −, arabinose −. O group D with Vi antigen.",
+    gram:"rod", oxi:"-", cat:"+", mac:"-", tsi:"K/A", gas:"-", h2s:"w", ind:"-", cit:"-", mot:"+", ure:"-",
+    ldc:"+", odc:"-", vp:"-", onpg:"-", suc:"-", man:"+", ara:"-", mal:"-", smac:"+", mug:"-",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"-", salm:"D/Vi" },
+
+  { id:"s_paratyphiA", genus:"Salmonella", sp:"Paratyphi A", floor:"enteric", specimen:"Blood",
+    hx:"Enteric fever in a traveler from South Asia — clinically indistinguishable from typhoid.",
+    key:"The 'odd' Salmonella: H₂S −, lysine −, citrate −, but gas + and ornithine +. O group A.",
+    gram:"rod", oxi:"-", cat:"+", mac:"-", tsi:"K/A", gas:"+", h2s:"-", ind:"-", cit:"-", mot:"+", ure:"-",
+    ldc:"-", odc:"+", vp:"-", onpg:"-", suc:"-", man:"+", ara:"+", mal:"-", smac:"+", mug:"-",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"-", salm:"A" },
+
+  { id:"s_choleraesuis", genus:"Salmonella", sp:"Choleraesuis", floor:"enteric", specimen:"Blood",
+    hx:"Pig-farm worker with high fever and bacteremia but little diarrhea; CT shows a mycotic aneurysm.",
+    key:"Invasive, bacteremic serotype. H₂S variable (often −), arabinose −, citrate variable. O group C1.",
+    gram:"rod", oxi:"-", cat:"+", mac:"-", tsi:"K/A", gas:"+", h2s:"V", ind:"-", cit:"V", mot:"+", ure:"-",
+    ldc:"+", odc:"+", vp:"-", onpg:"-", suc:"-", man:"+", ara:"-", mal:"-", smac:"+", mug:"-",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"-", salm:"C1" },
+
+  { id:"s_typhimurium", genus:"Salmonella", sp:"Typhimurium", floor:"enteric", specimen:"Stool",
+    hx:"Fever, cramps and diarrhea 24 h after a potluck featuring undercooked eggs and chicken.",
+    key:"Classic Salmonella: NLF, TSI K/A gas + H₂S +, citrate +, LDC +, ODC +, malonate −, ONPG −. O group B.",
+    gram:"rod", oxi:"-", cat:"+", mac:"-", tsi:"K/A", gas:"+", h2s:"+", ind:"-", cit:"+", mot:"+", ure:"-",
+    ldc:"+", odc:"+", vp:"-", onpg:"-", suc:"-", man:"+", ara:"+", mal:"-", smac:"+", mug:"-",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"-", salm:"B" },
+
+  { id:"s_arizonae", genus:"Salmonella", sp:"enterica subsp. arizonae", floor:"enteric", specimen:"Stool",
+    hx:"Gastroenteritis in a toddler whose family keeps pet snakes and a bearded dragon.",
+    key:"Reptile-associated. Like Salmonella (H₂S +, gas +) but malonate + and ONPG +, often a late lactose fermenter. Subspecies IIIa.",
+    gram:"rod", oxi:"-", cat:"+", mac:"late", tsi:"K/A", gas:"+", h2s:"+", ind:"-", cit:"+", mot:"+", ure:"-",
+    ldc:"+", odc:"+", vp:"-", onpg:"+", suc:"-", man:"+", ara:"+", mal:"+", smac:"+", mug:"-",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"-", salm:"IIIa" },
+
+  { id:"sh_dys", genus:"Shigella", sp:"dysenteriae", floor:"enteric", specimen:"Stool",
+    hx:"Severe bloody dysentery with HUS during an outbreak in a crowded refugee camp (Shiga toxin producer).",
+    key:"Subgroup A. Mannitol − (the only Shigella that is), type 1 is catalase −. Non-motile, NLF, no gas, no H₂S.",
+    gram:"rod", oxi:"-", cat:"-", mac:"-", tsi:"K/A", gas:"-", h2s:"-", ind:"V", cit:"-", mot:"-", ure:"-",
+    ldc:"-", odc:"-", vp:"-", onpg:"V", suc:"-", man:"-", ara:"V", mal:"-", smac:"V", mug:"V",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"A", salm:"-" },
+
+  { id:"sh_flex", genus:"Shigella", sp:"flexneri", floor:"enteric", specimen:"Stool",
+    hx:"Bloody diarrhea with tenesmus; most common Shigella in low-income countries.",
+    key:"Subgroup B. Mannitol +, ornithine −, ONPG −. Separate from boydii only by antisera.",
+    gram:"rod", oxi:"-", cat:"+", mac:"-", tsi:"K/A", gas:"-", h2s:"-", ind:"V", cit:"-", mot:"-", ure:"-",
+    ldc:"-", odc:"-", vp:"-", onpg:"-", suc:"-", man:"+", ara:"V", mal:"-", smac:"V", mug:"V",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"B", salm:"-" },
+
+  { id:"sh_boyd", genus:"Shigella", sp:"boydii", floor:"enteric", specimen:"Stool",
+    hx:"Dysentery in a traveler returning from the Indian subcontinent; an uncommon serogroup.",
+    key:"Subgroup C. Mannitol +, ornithine − (except serotype 13). Biochemically like flexneri — needs antisera.",
+    gram:"rod", oxi:"-", cat:"+", mac:"-", tsi:"K/A", gas:"-", h2s:"-", ind:"V", cit:"-", mot:"-", ure:"-",
+    ldc:"-", odc:"-", vp:"-", onpg:"V", suc:"-", man:"+", ara:"+", mal:"-", smac:"V", mug:"V",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"C", salm:"-" },
+
+  { id:"sh_sonn", genus:"Shigella", sp:"sonnei", floor:"enteric", specimen:"Stool",
+    hx:"Daycare outbreak of watery-then-bloody diarrhea; most common Shigella in the US.",
+    key:"Subgroup D. The odd one: ornithine +, ONPG +, late lactose fermenter, indole −.",
+    gram:"rod", oxi:"-", cat:"+", mac:"late", tsi:"K/A", gas:"-", h2s:"-", ind:"-", cit:"-", mot:"-", ure:"-",
+    ldc:"-", odc:"+", vp:"-", onpg:"+", suc:"-", man:"+", ara:"+", mal:"-", smac:"-", mug:"V",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"S", nit:"+", shig:"D", salm:"-" },
+
+  { id:"y_pestis", genus:"Yersinia", sp:"pestis", floor:"enteric", specimen:"Lymph node aspirate",
+    hx:"Exquisitely painful inguinal bubo after camping in New Mexico; flea bites on the legs.",
+    key:"Bipolar 'safety pin' staining. Non-motile at 25 °C AND 37 °C, urease −, ornithine −. Grows best at 25–28 °C.",
+    gram:"pin", oxi:"-", cat:"+", mac:"-", tsi:"K/A", gas:"-", h2s:"-", ind:"-", cit:"-", mot:"-", ure:"-",
+    ldc:"-", odc:"-", vp:"-", onpg:"V", suc:"-", man:"+", ara:"+", mal:"-", smac:"V", mug:"-",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"-",
+    nal:"S", ceph:"V", nit:"V", shig:"-", salm:"-" },
+
+  { id:"y_entero", genus:"Yersinia", sp:"enterocolitica", floor:"enteric", specimen:"Stool",
+    hx:"Child with fever and right-lower-quadrant pain mimicking appendicitis after a holiday meal of chitterlings.",
+    key:"Motile at 25 °C (not 37 °C), urease +, ornithine +, sucrose + (TSI A/A), sorbitol +. CIN agar 'bull's-eye'.",
+    gram:"rod", oxi:"-", cat:"+", mac:"-", tsi:"A/A", gas:"-", h2s:"-", ind:"V", cit:"-", mot:"25", ure:"+",
+    ldc:"-", odc:"+", vp:"25", onpg:"+", suc:"+", man:"+", ara:"+", mal:"-", smac:"+", mug:"-",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"-",
+    nal:"S", ceph:"R", nit:"+", shig:"-", salm:"-" },
+
+  { id:"y_pseudo", genus:"Yersinia", sp:"pseudotuberculosis", floor:"enteric", specimen:"Mesenteric lymph node",
+    hx:"Teen with mesenteric lymphadenitis (pseudoappendicitis); family raises rabbits.",
+    key:"Motile at 25 °C, urease +, but ornithine − and sucrose − (TSI K/A), sorbitol −. Rhamnose +.",
+    gram:"rod", oxi:"-", cat:"+", mac:"-", tsi:"K/A", gas:"-", h2s:"-", ind:"-", cit:"-", mot:"25", ure:"+",
+    ldc:"-", odc:"-", vp:"-", onpg:"+", suc:"-", man:"+", ara:"V", mal:"-", smac:"-", mug:"-",
+    tcbs:"NG", nacl:"+ V - -", string:"-", o129:"R", dnase:"-", hemo:"-", hipp:"-", t42:"-",
+    nal:"S", ceph:"S", nit:"+", shig:"-", salm:"-" },
+
+  // -------------------------- NON-ENTERICS --------------------------
+  { id:"v_chol", genus:"Vibrio", sp:"cholerae", floor:"nonenteric", specimen:"Stool",
+    hx:"Profuse painless 'rice-water' diarrhea with severe dehydration after flooding in a coastal city.",
+    key:"Oxidase +, grows WITHOUT added salt (0% NaCl), sucrose + → yellow on TCBS, string test +, O/129 S.",
+    gram:"curved", oxi:"+", cat:"+", mac:"-", tsi:"A/A", gas:"-", h2s:"-", ind:"+", cit:"+", mot:"+", ure:"-",
+    ldc:"+", odc:"+", vp:"V", onpg:"+", suc:"+", man:"+", ara:"-", mal:"-", smac:"-", mug:"-",
+    tcbs:"Y", nacl:"+ V - -", string:"+", o129:"S", dnase:"+", hemo:"V", hipp:"-", t42:"+",
+    nal:"S", ceph:"V", nit:"+", shig:"-", salm:"-" },
+
+  { id:"v_para", genus:"Vibrio", sp:"parahaemolyticus", floor:"nonenteric", specimen:"Stool",
+    hx:"Explosive watery diarrhea 12 hours after a raw-oyster and sushi dinner.",
+    key:"Halophilic (no growth in 0% NaCl; grows in 6–8%, not 10%). Sucrose − → green on TCBS. Arabinose +, VP −, ONPG −.",
+    gram:"curved", oxi:"+", cat:"+", mac:"-", tsi:"K/A", gas:"-", h2s:"-", ind:"+", cit:"-", mot:"+", ure:"-",
+    ldc:"+", odc:"+", vp:"-", onpg:"-", suc:"-", man:"+", ara:"+", mal:"-", smac:"-", mug:"-",
+    tcbs:"G", nacl:"- + + -", string:"V", o129:"S", dnase:"+", hemo:"V", hipp:"-", t42:"+",
+    nal:"S", ceph:"V", nit:"+", shig:"-", salm:"-" },
+
+  { id:"v_vuln", genus:"Vibrio", sp:"vulnificus", floor:"nonenteric", specimen:"Blood",
+    hx:"Man with cirrhosis develops hemorrhagic bullae and septic shock two days after eating raw Gulf oysters.",
+    key:"The lactose-positive Vibrio (ONPG +). Halophilic: 6% NaCl + but 8% −. Sucrose − → green on TCBS.",
+    gram:"curved", oxi:"+", cat:"+", mac:"+", tsi:"K/A", gas:"-", h2s:"-", ind:"+", cit:"+", mot:"+", ure:"-",
+    ldc:"+", odc:"V", vp:"-", onpg:"+", suc:"-", man:"V", ara:"-", mal:"-", smac:"-", mug:"-",
+    tcbs:"G", nacl:"- + - -", string:"V", o129:"S", dnase:"+", hemo:"+", hipp:"-", t42:"+",
+    nal:"S", ceph:"V", nit:"+", shig:"-", salm:"-" },
+
+  { id:"v_algi", genus:"Vibrio", sp:"alginolyticus", floor:"nonenteric", specimen:"Ear swab",
+    hx:"Otitis externa in a surfer after a week in warm ocean water.",
+    key:"Most salt-tolerant: grows in 10% NaCl. Sucrose + → yellow on TCBS, VP +, swarms on marine agar.",
+    gram:"curved", oxi:"+", cat:"+", mac:"-", tsi:"A/A", gas:"-", h2s:"-", ind:"+", cit:"-", mot:"+", ure:"-",
+    ldc:"+", odc:"V", vp:"+", onpg:"-", suc:"+", man:"+", ara:"-", mal:"-", smac:"-", mug:"-",
+    tcbs:"Y", nacl:"- + + +", string:"V", o129:"S", dnase:"+", hemo:"V", hipp:"-", t42:"+",
+    nal:"S", ceph:"V", nit:"+", shig:"-", salm:"-" },
+
+  { id:"v_mimi", genus:"Vibrio", sp:"mimicus", floor:"nonenteric", specimen:"Stool",
+    hx:"Diarrhea after eating raw oysters; the isolate grew without added salt.",
+    key:"'Mimics' V. cholerae (non-halophilic, string-ish, LDC/ODC +) but sucrose − → GREEN on TCBS (TSI K/A) and VP −.",
+    gram:"curved", oxi:"+", cat:"+", mac:"-", tsi:"K/A", gas:"-", h2s:"-", ind:"+", cit:"+", mot:"+", ure:"-",
+    ldc:"+", odc:"+", vp:"-", onpg:"+", suc:"-", man:"+", ara:"-", mal:"-", smac:"-", mug:"-",
+    tcbs:"G", nacl:"+ V - -", string:"V", o129:"S", dnase:"+", hemo:"V", hipp:"-", t42:"+",
+    nal:"S", ceph:"V", nit:"+", shig:"-", salm:"-" },
+
+  { id:"aero", genus:"Aeromonas", sp:"hydrophila", floor:"nonenteric", specimen:"Wound",
+    hx:"Rapidly spreading leg cellulitis after a cut while wading in a freshwater lake.",
+    key:"Oxidase +, β-hemolytic, DNase +, O/129 RESISTANT, no growth in 6% NaCl, ornithine −, sucrose + / mannitol +.",
+    gram:"rod", oxi:"+", cat:"+", mac:"V", tsi:"A/A", gas:"+", h2s:"-", ind:"+", cit:"V", mot:"+", ure:"-",
+    ldc:"V", odc:"-", vp:"+", onpg:"+", suc:"+", man:"+", ara:"V", mal:"-", smac:"V", mug:"-",
+    tcbs:"NG", nacl:"+ - - -", string:"-", o129:"R", dnase:"+", hemo:"+", hipp:"-", t42:"V",
+    nal:"V", ceph:"R", nit:"+", shig:"-", salm:"-" },
+
+  { id:"plesio", genus:"Plesiomonas", sp:"shigelloides", floor:"nonenteric", specimen:"Stool",
+    hx:"Diarrhea in a traveler after eating raw shellfish in the tropics.",
+    key:"Oxidase +, LDC/ODC (and ADH) all +, DNase −, non-hemolytic, mannitol −, inositol +, O/129 S. Cross-reacts with Shigella sonnei (group D) antiserum!",
+    gram:"rod", oxi:"+", cat:"+", mac:"V", tsi:"K/A", gas:"-", h2s:"-", ind:"+", cit:"-", mot:"+", ure:"-",
+    ldc:"+", odc:"+", vp:"-", onpg:"+", suc:"-", man:"-", ara:"-", mal:"-", smac:"-", mug:"-",
+    tcbs:"NG", nacl:"+ - - -", string:"-", o129:"S", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"V", nit:"+", shig:"D", salm:"-" },
+
+  { id:"c_jejuni", genus:"Campylobacter", sp:"jejuni", floor:"nonenteric", specimen:"Stool",
+    hx:"Bloody diarrhea after undercooked chicken; three weeks later an ascending flaccid paralysis (Guillain–Barré).",
+    key:"Seagull-wing GNR, darting motility, microaerophilic, grows at 42 °C. HIPPURATE + (the only one). Nalidixic acid S, cephalothin R.",
+    gram:"seagull", oxi:"+", cat:"+", mac:"NG", tsi:"NG", gas:"-", h2s:"-", ind:"-", cit:"-", mot:"+", ure:"-",
+    ldc:"-", odc:"-", vp:"-", onpg:"-", suc:"-", man:"-", ara:"-", mal:"-", smac:"NG", mug:"-",
+    tcbs:"NG", nacl:"NG", string:"-", o129:"NA", dnase:"-", hemo:"-", hipp:"+", t42:"+",
+    nal:"S", ceph:"R", nit:"+", shig:"-", salm:"-" },
+
+  { id:"c_coli", genus:"Campylobacter", sp:"coli", floor:"nonenteric", specimen:"Stool",
+    hx:"Diarrheal illness after eating undercooked pork; clinically identical to C. jejuni.",
+    key:"Same as C. jejuni (42 °C +, nalidixic S, cephalothin R) EXCEPT hippurate −.",
+    gram:"seagull", oxi:"+", cat:"+", mac:"NG", tsi:"NG", gas:"-", h2s:"-", ind:"-", cit:"-", mot:"+", ure:"-",
+    ldc:"-", odc:"-", vp:"-", onpg:"-", suc:"-", man:"-", ara:"-", mal:"-", smac:"NG", mug:"-",
+    tcbs:"NG", nacl:"NG", string:"-", o129:"NA", dnase:"-", hemo:"-", hipp:"-", t42:"+",
+    nal:"S", ceph:"R", nit:"+", shig:"-", salm:"-" },
+
+  { id:"c_fetus", genus:"Campylobacter", sp:"fetus", floor:"nonenteric", specimen:"Blood",
+    hx:"Bacteremia and an infected aortic graft in an elderly immunocompromised farmer.",
+    key:"Systemic/vascular infections. Grows at 25 °C but NOT 42 °C. Nalidixic acid R, cephalothin S (opposite of jejuni/coli). Hippurate −.",
+    gram:"seagull", oxi:"+", cat:"+", mac:"NG", tsi:"NG", gas:"-", h2s:"-", ind:"-", cit:"-", mot:"+", ure:"-",
+    ldc:"-", odc:"-", vp:"-", onpg:"-", suc:"-", man:"-", ara:"-", mal:"-", smac:"NG", mug:"-",
+    tcbs:"NG", nacl:"NG", string:"-", o129:"NA", dnase:"-", hemo:"-", hipp:"-", t42:"-",
+    nal:"R", ceph:"S", nit:"+", shig:"-", salm:"-" },
+
+  { id:"h_pylori", genus:"Helicobacter", sp:"pylori", floor:"nonenteric", specimen:"Gastric biopsy",
+    hx:"Burning epigastric pain relieved by meals; endoscopy shows a duodenal ulcer.",
+    key:"Curved/spiral GNR, oxidase +, catalase +, RAPID strong urease +. Nitrate −, no growth at 42 °C, nalidixic R, cephalothin S.",
+    gram:"spiral", oxi:"+", cat:"+", mac:"NG", tsi:"NG", gas:"-", h2s:"-", ind:"-", cit:"-", mot:"+", ure:"rapid",
+    ldc:"-", odc:"-", vp:"-", onpg:"-", suc:"-", man:"-", ara:"-", mal:"-", smac:"NG", mug:"-",
+    tcbs:"NG", nacl:"NG", string:"-", o129:"NA", dnase:"-", hemo:"-", hipp:"-", t42:"-",
+    nal:"R", ceph:"S", nit:"-", shig:"-", salm:"-" },
+
+  { id:"h_cinaedi", genus:"Helicobacter", sp:"cinaedi", floor:"nonenteric", specimen:"Blood",
+    hx:"Recurrent bacteremia with multifocal cellulitis in a man living with advanced HIV.",
+    key:"Enterohepatic Helicobacter: urease −, nitrate +, nalidixic acid S, cephalothin I, no growth at 42 °C.",
+    gram:"spiral", oxi:"+", cat:"+", mac:"NG", tsi:"NG", gas:"-", h2s:"-", ind:"-", cit:"-", mot:"+", ure:"-",
+    ldc:"-", odc:"-", vp:"-", onpg:"-", suc:"-", man:"-", ara:"-", mal:"-", smac:"NG", mug:"-",
+    tcbs:"NG", nacl:"NG", string:"-", o129:"NA", dnase:"-", hemo:"-", hipp:"-", t42:"-",
+    nal:"S", ceph:"I", nit:"+", shig:"-", salm:"-" },
+];
+
+/* Boss pairs: look-alikes that need a separating test. "lesson" is shown after the fight.
+   floor: which floor's boss pool the pair belongs to (Mixed draws from every pair). */
+const BOSSES = [
+  { a:"ecoli", b:"o157", floor:"enteric", name:"The Sorbitol Twins",
+    lesson:"SMAC: E. coli ferments sorbitol (pink); O157:H7 does not (colorless). MUG also splits them: O157:H7 is β-glucuronidase −." },
+  { a:"s_typhi", b:"s_paratyphiA", floor:"enteric", name:"The Enteric Fever Duo",
+    lesson:"TSI: Typhi = K/A, no gas, a wisp of H₂S. Paratyphi A = K/A, gas +, H₂S −. Also LDC (Typhi +, Para A −) and ODC (Typhi −, Para A +)." },
+  { a:"sh_dys", b:"sh_flex", floor:"enteric", name:"Mannitol Masquerade",
+    lesson:"Mannitol: S. dysenteriae (group A) is the only mannitol-negative Shigella. Type 1 is also catalase −." },
+  { a:"y_entero", b:"y_pseudo", floor:"enteric", name:"Pseudo-Appendix Pair",
+    lesson:"Both motile at 25 °C and urease +. Y. enterocolitica: sucrose + (TSI A/A), ornithine +, sorbitol +. Y. pseudotuberculosis: all three negative." },
+  { a:"s_typhimurium", b:"s_arizonae", floor:"enteric", name:"The Reptile House",
+    lesson:"Malonate and ONPG: subsp. arizonae is + for both (and often a late lactose fermenter); Typhimurium is − for both." },
+  { a:"y_pestis", b:"y_pseudo", floor:"enteric", name:"Black Death & Its Shadow",
+    lesson:"Y. pestis is non-motile at 25 °C and urease −; Y. pseudotuberculosis is motile at 25 °C and urease +." },
+  { a:"v_chol", b:"v_mimi", floor:"nonenteric", name:"The Rice-Water Mirror",
+    lesson:"Sucrose: V. cholerae + (yellow on TCBS, TSI A/A); V. mimicus − (green on TCBS, TSI K/A)." },
+  { a:"v_para", b:"v_algi", floor:"nonenteric", name:"The Halophile Sisters",
+    lesson:"V. alginolyticus: sucrose + (yellow TCBS), VP +, grows in 10% NaCl. V. parahaemolyticus: sucrose − (green TCBS), VP −, no growth in 10%." },
+  { a:"c_jejuni", b:"c_coli", floor:"nonenteric", name:"The Hippurate Hydra",
+    lesson:"Hippurate hydrolysis is the classic split: C. jejuni +, C. coli −." },
+  { a:"c_jejuni", b:"c_fetus", floor:"nonenteric", name:"Thermophile Rivals",
+    lesson:"C. jejuni: grows at 42 °C, nalidixic acid S, cephalothin R. C. fetus: no growth at 42 °C, nalidixic R, cephalothin S." },
+  { a:"h_pylori", b:"h_cinaedi", floor:"nonenteric", name:"The Urease Gatekeeper",
+    lesson:"H. pylori: rapid urease +, nitrate −, nalidixic R. H. cinaedi: urease −, nitrate +, nalidixic S." },
+  { a:"aero", b:"plesio", floor:"nonenteric", name:"Freshwater Phantoms",
+    lesson:"Aeromonas: DNase +, β-hemolytic, mannitol +, sucrose +, gas +. Plesiomonas: DNase −, non-hemolytic, mannitol −, sucrose −." },
+  { a:"aero", b:"v_chol", floor:"nonenteric", name:"The Vibrio Pretender",
+    lesson:"O/129 150 µg: Vibrio S, Aeromonas R. Also V. cholerae is string +, yellow on TCBS; Aeromonas grows poorly on TCBS." },
+  { a:"plesio", b:"sh_sonn", floor:"mixed", name:"The Group D Impostor",
+    lesson:"Plesiomonas cross-reacts with Shigella sonnei (group D) antiserum! Oxidase settles it: Plesiomonas +, Shigella −. Plesiomonas is also motile." },
+  { a:"sh_sonn", b:"ecoli", floor:"mixed", name:"The Lactose Liars",
+    lesson:"S. sonnei is a late LF and can look like 'inactive E. coli'. E. coli is motile, LDC +, gas +; S. sonnei is non-motile, LDC −, no gas." },
+];
+</script>
+<style>
+:root{
+  --bg:#120b1e;--bg2:#190f2a;--panel:#211535;--panel2:#2c1c47;--line:#4a3373;
+  --ink:#f3ebff;--muted:#a993cc;--purple:#9b5cff;--purple2:#6d3fd1;--pink:#ff4fa3;--pink2:#c2307a;
+  --good:#4fe0a0;--bad:#ff5a6a;--gold:#ffd166;--bench:#2a1d40;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{
+  font:14px/1.45 ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono","Courier New",monospace;
+  background-color:var(--bg);
+  background-image:linear-gradient(rgba(155,92,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(155,92,255,.05) 1px,transparent 1px);
+  background-size:16px 16px;min-height:100vh;
+}
+#app{max-width:780px;margin:0 auto;padding:12px 16px 110px}
+h1,h2,h3{margin:0;text-transform:uppercase;letter-spacing:2px;line-height:1.2}
+h2{font-size:18px;color:var(--pink);text-shadow:2px 2px 0 #000}
+h3{font-size:13px;color:var(--muted);margin:18px 0 8px}
+p{margin:6px 0}
+.muted{color:var(--muted)}.good{color:var(--good)}.bad{color:var(--bad)}.gold{color:var(--gold)}.pinkt{color:var(--pink)}
+.px{image-rendering:pixelated;display:block;width:72px;height:72px}
+.btn{
+  font:inherit;font-weight:700;color:var(--ink);background:var(--panel2);border:3px solid var(--purple);
+  box-shadow:4px 4px 0 #000;padding:10px 12px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;
+  text-align:center;border-radius:0;
+}
+.btn:hover{background:#3a2560}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn.pink{border-color:var(--pink);background:#3d1834}
+.btn.pink:hover{background:#55203f}
+.btn.ghost{background:transparent;border-color:var(--line);box-shadow:none}
+.btn.small{padding:6px 8px;font-size:12px}
+.btn.wide{width:100%}
+.panel{background:var(--panel);border:3px solid var(--line);box-shadow:4px 4px 0 #000;padding:12px;margin:10px 0}
+.panel.pinkb{border-color:var(--pink)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:10px}
+.spacer{flex:1}
+.tag{display:inline-block;font-size:11px;padding:2px 6px;border:2px solid var(--line);text-transform:uppercase;letter-spacing:1px;background:var(--bg2)}
+.tag.pink{border-color:var(--pink);color:var(--pink)}
+.tag.gold{border-color:var(--gold);color:var(--gold)}
+.tag.bad{border-color:var(--bad);color:var(--bad)}
+.tag.good{border-color:var(--good);color:var(--good)}
+
+/* Title */
+.logo{font-size:clamp(30px,9vw,54px);color:var(--pink);text-shadow:3px 3px 0 var(--purple2),6px 6px 0 #000;letter-spacing:3px;text-align:center;margin:18px 0 4px}
+.sub{text-align:center;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-size:12px}
+.hero{display:flex;justify-content:center;gap:8px;margin:14px 0}
+.hero svg{width:72px;height:72px}
+.floors{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.floorbtn{text-align:left;display:flex;flex-direction:column;gap:4px;text-transform:none;letter-spacing:0}
+.floorbtn b{text-transform:uppercase;letter-spacing:1px;color:var(--pink)}
+
+/* HUD */
+.hud{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:3px solid var(--line);margin:0 -16px 10px;padding:8px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.meter{display:flex;align-items:center;gap:6px;font-weight:700}
+.bar{width:min(110px,20vw);height:12px;background:#000;border:2px solid var(--line);position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:repeating-linear-gradient(90deg,var(--c) 0 6px,transparent 6px 8px)}
+.hud .ico{width:18px;height:18px}
+
+/* Map */
+.corridor{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+.cell{width:30px;height:30px;border:3px solid var(--line);display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--bg2)}
+.cell.done{background:var(--purple2);border-color:var(--purple)}
+.cell.now{border-color:var(--pink);animation:blink 1s steps(2) infinite}
+.cell.boss{border-color:var(--bad);color:var(--bad)}
+@keyframes blink{50%{background:#55203f}}
+.doors{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.door{display:flex;gap:12px;align-items:center;text-align:left;text-transform:none;letter-spacing:0}
+.door svg{width:56px;height:56px;flex:none}
+.door b{display:block;text-transform:uppercase;letter-spacing:1px}
+
+/* Room */
+.hand{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px}
+.card{position:relative;padding:8px 6px 6px;min-height:62px;text-transform:none;letter-spacing:0;font-size:12px;line-height:1.2;display:flex;flex-direction:column;justify-content:space-between;align-items:stretch}
+.card .cost{position:absolute;top:-8px;right:-8px;background:var(--gold);color:#000;font-weight:900;border:2px solid #000;padding:0 5px;font-size:12px}
+.card .cost.free{background:var(--good)}
+.card.used{opacity:.35}
+.card .ct{font-weight:800}
+.card .cs{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px}
+.card.loan{border-color:var(--gold)}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.res{display:flex;gap:10px;align-items:center;background:var(--bench);border:3px solid var(--line);padding:8px}
+.res svg{width:72px;height:72px;flex:none;background:#160e24}
+.res .rn{font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:1px;color:var(--pink)}
+.res .rr{font-size:13px}
+.res.new{animation:pop .35s steps(3)}
+@keyframes pop{0%{transform:scale(.9);border-color:var(--gold)}100%{transform:scale(1)}}
+.sus h4{margin:10px 0 6px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:13px;color:var(--ink);background:var(--panel2);border:2px solid var(--line);padding:7px 9px;cursor:pointer;font-style:italic}
+.chip.sel{border-color:var(--pink);background:#55203f;box-shadow:3px 3px 0 #000}
+.chip.struck{opacity:.4;text-decoration:line-through}
+.chip.wrong{border-color:var(--bad);color:var(--bad);text-decoration:line-through;opacity:.7}
+.actbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(18,11,30,.97);border-top:3px solid var(--pink);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+.actbar .in{max-width:780px;margin:0 auto;display:flex;gap:8px;align-items:center}
+.actbar .in .btn{flex:1}
+.actbar .in .btn.small{flex:none}
+.banner{border:3px solid var(--bad);background:#2e0f1f;padding:10px;margin:10px 0;box-shadow:4px 4px 0 #000}
+.banner b{color:var(--bad);text-transform:uppercase;letter-spacing:2px}
+.shake{animation:shake .3s steps(4)}
+@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}
+
+/* Rewards */
+.rewards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.reward{text-align:left;text-transform:none;letter-spacing:0;display:flex;flex-direction:column;gap:6px;min-height:120px}
+.reward b{text-transform:uppercase;letter-spacing:1px}
+.reward .tag{align-self:flex-start}
+.reward.picked{border-color:var(--good);background:#16332a}
+
+/* Codex */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.centry{text-align:left;text-transform:none;letter-spacing:0;font-style:italic;font-weight:600;font-size:13px}
+.centry.locked{font-style:normal;color:var(--muted)}
+table.ct{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+table.ct td{border-bottom:1px dashed var(--line);padding:5px 4px;vertical-align:top;overflow-wrap:anywhere}
+table.ct td:first-child{color:var(--muted);width:30%}
+table.ct td.v{font-weight:800;color:var(--gold);width:22%}
+table.ct.two td:first-child{width:3.5em;color:var(--gold);font-weight:800}
+
+/* Modal */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(5,2,10,.78);display:flex;align-items:flex-end;justify-content:center;padding:0}
+.modal .box{background:var(--panel);border:3px solid var(--pink);box-shadow:6px 6px 0 #000;width:100%;max-width:780px;max-height:88vh;overflow:auto;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+@media (min-width:700px){.modal{align-items:center;padding:16px}}
+.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:30;background:var(--panel2);border:3px solid var(--gold);padding:8px 14px;box-shadow:4px 4px 0 #000;font-weight:700;max-width:90vw;text-align:center}
+.toast.bad{border-color:var(--bad);color:var(--bad)}
+.toast.good{border-color:var(--good);color:var(--good)}
+ul.rules{padding-left:18px;margin:6px 0}
+ul.rules li{margin:4px 0}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+/* ============================ TEST CARDS ============================ */
+const BASIC = ["gram","oxi","mac","tsi","ind","cit","mot","ure"];
+const TESTS = {
+  gram:  {name:"Gram Stain",        cost:1, cols:["gram"], cat:"Stain",   desc:"Gram reaction and cell shape. Curved, seagull and spiral shapes point away from the Enterobacterales."},
+  oxi:   {name:"Oxidase",           cost:1, cols:["oxi"],  cat:"Spot",    desc:"Cytochrome c oxidase. Enterobacterales are negative; Vibrio, Aeromonas, Plesiomonas, Campylobacter and Helicobacter are positive."},
+  cat:   {name:"Catalase",          cost:1, cols:["cat"],  cat:"Spot",    desc:"Bubbles with H₂O₂. Almost everything here is +; Shigella dysenteriae type 1 is the classic exception."},
+  mac:   {name:"MacConkey Agar",    cost:1, cols:["mac"],  cat:"Plate",   desc:"Selective for Gram-negatives; pink = lactose fermenter, colorless = non-fermenter."},
+  tsi:   {name:"TSI Slant",         cost:2, cols:["tsi","gas","h2s"], cat:"Tube", desc:"Triple Sugar Iron: slant/butt (K = alkaline red, A = acid yellow), gas from glucose, and H₂S (black)."},
+  ind:   {name:"Indole",            cost:1, cols:["ind"],  cat:"Tube",    desc:"Tryptophanase. Red ring with Kovács reagent = positive."},
+  cit:   {name:"Simmons Citrate",   cost:1, cols:["cit"],  cat:"Tube",    desc:"Citrate as sole carbon source. Blue = positive, green = negative."},
+  mot:   {name:"Motility",          cost:1, cols:["mot"],  cat:"Tube",    desc:"Semi-solid stab at 37 °C and 25 °C. Diffuse growth = motile."},
+  ure:   {name:"Urease",            cost:1, cols:["ure"],  cat:"Tube",    desc:"Christensen urea. Pink = urease positive. Rapid, intense pink in minutes suggests H. pylori."},
+  ldc:   {name:"Lysine Decarb.",    cost:1, cols:["ldc"],  cat:"Tube",    desc:"Moeller lysine decarboxylase. Purple = positive, yellow = negative."},
+  odc:   {name:"Ornithine Decarb.", cost:1, cols:["odc"],  cat:"Tube",    desc:"Moeller ornithine decarboxylase. Purple = positive, yellow = negative."},
+  vp:    {name:"Voges–Proskauer",   cost:1, cols:["vp"],   cat:"Tube",    desc:"Acetoin from glucose. Red after α-naphthol + KOH = positive."},
+  onpg:  {name:"ONPG",              cost:1, cols:["onpg"], cat:"Tube",    desc:"β-galactosidase. Yellow = positive; detects late lactose fermenters."},
+  suc:   {name:"Sucrose",           cost:1, cols:["suc"],  cat:"Tube",    desc:"Phenol red sucrose broth. Yellow = fermented."},
+  man:   {name:"Mannitol",          cost:1, cols:["man"],  cat:"Tube",    desc:"Phenol red mannitol broth. Yellow = fermented."},
+  ara:   {name:"Arabinose",         cost:1, cols:["ara"],  cat:"Tube",    desc:"Phenol red L-arabinose broth. Yellow = fermented."},
+  mal:   {name:"Malonate",          cost:1, cols:["mal"],  cat:"Tube",    desc:"Malonate utilization. Blue = positive, green = negative."},
+  smac:  {name:"Sorbitol MAC",      cost:2, cols:["smac"], cat:"Plate",   desc:"MacConkey with sorbitol. Colorless colonies = sorbitol non-fermenter (screen for E. coli O157:H7)."},
+  mug:   {name:"MUG (UV)",          cost:2, cols:["mug"],  cat:"Tube",    desc:"β-glucuronidase. Blue fluorescence under UV = positive."},
+  tcbs:  {name:"TCBS Agar",         cost:2, cols:["tcbs"], cat:"Plate",   desc:"Thiosulfate-citrate-bile salts-sucrose: Vibrio selective. Yellow = sucrose fermenter, green = non-fermenter."},
+  nacl:  {name:"Salt Tolerance",    cost:2, cols:["nacl"], cat:"Tube",    desc:"Growth in nutrient broth with 0%, 6%, 8%, 10% NaCl. Sorts halophilic Vibrios."},
+  string:{name:"String Test",       cost:1, cols:["string"], cat:"Spot",  desc:"0.5% sodium deoxycholate lyses cells; a mucoid string on the loop = positive (V. cholerae)."},
+  o129:  {name:"O/129 Disk",        cost:2, cols:["o129"], cat:"Disk",    desc:"Vibriostatic agent O/129 (150 µg). Vibrio and Plesiomonas are susceptible; Aeromonas is resistant."},
+  dnase: {name:"DNase Agar",        cost:1, cols:["dnase"], cat:"Plate",  desc:"Clearing around growth = DNase positive."},
+  hemo:  {name:"Blood Agar",        cost:1, cols:["hemo"], cat:"Plate",   desc:"Sheep blood agar. Clear zone around colonies = β-hemolysis."},
+  hipp:  {name:"Hippurate",         cost:2, cols:["hipp"], cat:"Tube",    desc:"Hippurate hydrolysis; purple with ninhydrin = positive (C. jejuni)."},
+  t42:   {name:"Growth @ 42 °C",    cost:1, cols:["t42"],  cat:"Plate",   desc:"Incubation at 42 °C (microaerophilic for Campylobacter). Thermophilic Campylobacters grow."},
+  nal:   {name:"Nalidixic Acid",    cost:1, cols:["nal"],  cat:"Disk",    desc:"30 µg disk. Zone = susceptible. Classic Campylobacter/Helicobacter differentiator."},
+  ceph:  {name:"Cephalothin",       cost:1, cols:["ceph"], cat:"Disk",    desc:"30 µg disk. Zone = susceptible. C. jejuni/coli are resistant; C. fetus is susceptible."},
+  nit:   {name:"Nitrate",           cost:1, cols:["nit"],  cat:"Tube",    desc:"Nitrate reduction. Red after reagents A + B = positive."},
+  shig:  {name:"Shigella Antisera", cost:3, cols:["shig"], cat:"Serology", desc:"Slide agglutination with Shigella subgroup A, B, C, D antisera."},
+  salm:  {name:"Salmonella Antisera", cost:3, cols:["salm"], cat:"Serology", desc:"Slide agglutination with Salmonella O-group (A, B, C1, D) and Vi antisera."},
+  hx:    {name:"Chart Review",      cost:2, cols:[],       cat:"History", desc:"Read the patient's history and exposures."},
+};
+const COLS = ["gram","oxi","cat","mac","tsi","gas","h2s","ind","cit","mot","ure","ldc","odc","vp","onpg","suc","man","ara","mal","smac","mug","tcbs","nacl","string","o129","dnase","hemo","hipp","t42","nal","ceph","nit","shig","salm"];
+const ORG = Object.fromEntries(ORGANISMS.map(o=>[o.id,o]));
+const fullName = o => `${o.genus} ${o.sp}`;
+const shortName = o => `${o.genus[0]}. ${o.sp}`;
+
+const FLOORS = {
+  enteric:   {name:"Enterics",     n:1, levels:6, start:[...BASIC,"ldc"],         next:"nonenteric", blurb:"E. coli, Salmonella, Shigella, Yersinia."},
+  nonenteric:{name:"Non-enterics", n:2, levels:6, start:[...BASIC,"tcbs","t42"],  next:"mixed",      blurb:"Vibrio, Aeromonas, Plesiomonas, Campylobacter, Helicobacter."},
+  mixed:     {name:"Mixed Ward",   n:3, levels:8, start:[...BASIC,"ldc","tcbs"],  next:null,         blurb:"Everything, everywhere, all at once."},
+};
+const poolFor = f => ORGANISMS.filter(o => f==="mixed" || o.floor===f).map(o=>o.id);
+const bossesFor = f => BOSSES.filter(b => f==="mixed" || b.floor===f);
+
+const UPGRADES = {
+  bulk:  {name:"Bulk Order",     stack:true,  desc:"+2 lab budget in every room."},
+  tenure:{name:"Tenure",         stack:true,  desc:"+6 max HP and heal 6 HP."},
+  second:{name:"Second Opinion", stack:false, desc:"Your first wrong ID in each room deals half damage."},
+  auto:  {name:"Lab Automation", stack:false, desc:"The first test you run in each room is free."},
+  rapid: {name:"Rapid Workup",   stack:true,  desc:"Heal 3 HP after each solved case."},
+  disc:  {name:"Discount",       stack:true,  desc:"A test costs 1 less."},
+};
+const BASE_HP = 30, BASE_BUDGET = 8, HEAL = 10;
+const DMG = {patient:6, urgent:8, boss:12};
+
+/* ============================ SAVE ============================ */
+const SAVE_KEY = "cultureShock.v1";
+function defaultSave(){ return {v:1, unlocked:{enteric:true,nonenteric:false,mixed:false}, codex:{}, stats:{runs:0,wins:0,deaths:0,cases:0,best:{}}, run:null, last:null}; }
+function loadSave(){
+  try{ const t = localStorage.getItem(SAVE_KEY); if(t){ const o = JSON.parse(t); if(o && o.v===1){ const d=defaultSave(); return {...d, ...o, unlocked:{...d.unlocked,...o.unlocked}, stats:{...d.stats,...o.stats}}; } } }catch(e){}
+  return defaultSave();
+}
+let S = loadSave();
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
+const UI = {screen:"title", sel:null, fresh:null, modal:null};
+
+/* ============================ HELPERS ============================ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const rand = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; };
+function hash(s){ let h=2166136261; for(const ch of String(s)){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+function rng(seed){ let a=hash(seed); return ()=>{ a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ============================ READINGS ============================ */
+const READ = {
+  gram:{rod:"Gram-negative straight rods", curved:"Gram-negative curved, comma-shaped rods", seagull:"Gram-negative S-shaped 'seagull-wing' rods", spiral:"Gram-negative curved to spiral rods", pin:"Gram-negative coccobacilli with bipolar 'safety-pin' staining"},
+  oxi:{"+":"Purple within seconds — oxidase POSITIVE","-":"No color change — oxidase negative"},
+  cat:{"+":"Brisk bubbling — catalase positive","-":"No bubbles — catalase NEGATIVE"},
+  mac:{"+":"Pink colonies — lactose fermenter","-":"Colorless colonies — non-lactose fermenter","late":"Colorless at 24 h, pink by 48 h — late lactose fermenter"},
+  ind:{"+":"Red ring with Kovács — indole positive","-":"Yellow ring — indole negative"},
+  cit:{"+":"Blue slant — citrate utilized","-":"Stays green — citrate negative"},
+  mot:{"+":"Diffuse growth away from stab — motile","-":"Growth only along the stab — non-motile","25":"Motile at 25 °C, non-motile at 37 °C"},
+  ure:{"+":"Pink slant — urease positive","rapid":"Hot pink within minutes — strong, rapid urease","-":"No pink — urease negative"},
+  ldc:{"+":"Purple — lysine decarboxylase positive","-":"Yellow — lysine decarboxylase negative"},
+  odc:{"+":"Purple — ornithine decarboxylase positive","-":"Yellow — ornithine decarboxylase negative"},
+  vp:{"+":"Red after reagents — VP positive","-":"No red — VP negative","25":"VP positive at 25 °C, negative at 37 °C"},
+  onpg:{"+":"Yellow — β-galactosidase present","-":"Colorless — ONPG negative"},
+  suc:{"+":"Yellow — sucrose fermented","-":"Red — sucrose not fermented"},
+  man:{"+":"Yellow — mannitol fermented","-":"Red — mannitol not fermented"},
+  ara:{"+":"Yellow — arabinose fermented","-":"Red — arabinose not fermented"},
+  mal:{"+":"Blue — malonate utilized","-":"Green — malonate negative"},
+  smac:{"+":"Pink colonies — sorbitol fermenter","-":"Colorless colonies — sorbitol NON-fermenter"},
+  mug:{"+":"Blue fluorescence under UV — MUG positive","-":"No fluorescence — MUG negative"},
+  tcbs:{"Y":"Yellow colonies — sucrose fermenter","G":"Green colonies — sucrose non-fermenter"},
+  string:{"+":"Mucoid string stretches from the loop — positive","-":"No string — negative"},
+  o129:{"S":"Zone around O/129 disk — susceptible","R":"Growth up to the disk — O/129 resistant"},
+  dnase:{"+":"Clear zone around growth — DNase positive","-":"No clearing — DNase negative"},
+  hemo:{"+":"Clear zones around colonies — β-hemolytic","-":"No clearing — non-hemolytic"},
+  hipp:{"+":"Deep purple with ninhydrin — hippurate hydrolyzed","-":"Colorless — hippurate negative"},
+  t42:{"+":"Good growth at 42 °C","-":"No growth at 42 °C"},
+  nal:{"S":"Zone around disk — nalidixic acid susceptible","R":"No zone — nalidixic acid resistant"},
+  ceph:{"S":"Zone around disk — cephalothin susceptible","R":"No zone — cephalothin resistant","I":"Small zone — cephalothin intermediate"},
+  nit:{"+":"Red with reagents A + B — nitrate reduced","-":"Stays colorless, zinc turns it red — nitrate not reduced"},
+  shig:{"A":"Agglutinates in Shigella group A antiserum","B":"Agglutinates in Shigella group B antiserum","C":"Agglutinates in Shigella group C antiserum","D":"Agglutinates in Shigella group D antiserum","-":"No agglutination in Shigella A–D antisera"},
+  salm:{"A":"Agglutinates in Salmonella O group A antiserum","B":"Agglutinates in Salmonella O group B antiserum","C1":"Agglutinates in Salmonella O group C1 antiserum","D/Vi":"Agglutinates in O group D and Vi antisera","IIIa":"Poly-O positive, but no A, B, C1 or D match","-":"No agglutination in Salmonella antisera"},
+};
+const pm = v => v==="+"?"+":v==="-"?"−":v==="w"?"weak +":v==="V"?"variable":v;
+function readCol(c, v){
+  if(v==="NG") return "No growth";
+  if(v==="NA") return "Not applicable";
+  if(v==="V") return "Variable (strain-dependent)";
+  return (READ[c] && READ[c][v]) || v;
+}
+function readTest(tid, v, org){
+  if(tid==="hx") return org.hx;
+  if(tid==="tsi"){
+    if(v.tsi==="NG") return "No growth — did not grow aerobically on TSI";
+    const sb = v.tsi==="A/A" ? "A/A (yellow slant, yellow butt)" : "K/A (red slant, yellow butt)";
+    return `${sb}; gas ${pm(v.gas)}; H₂S ${pm(v.h2s)}`;
+  }
+  if(tid==="nacl"){
+    if(v.nacl==="NG") return "No growth in any broth (needs microaerophilic conditions)";
+    const t = v.nacl.split(" ");
+    return "Growth in NaCl — " + ["0%","6%","8%","10%"].map((p,i)=>`${p}: ${pm(t[i])}`).join(", ");
+  }
+  const c = TESTS[tid].cols[0];
+  return readCol(c, v[c]);
+}
+// Short code for codex tables
+function codeTest(tid, v){
+  if(tid==="hx") return "";
+  const sh = x => x==="-" ? "−" : x;
+  if(tid==="tsi") return v.tsi==="NG" ? "NG" : `${v.tsi} gas${sh(v.gas)} H₂S${sh(v.h2s)}`;
+  if(tid==="nacl") return v.nacl;
+  const c = TESTS[tid].cols[0]; return v[c];
+}
+
+/* ============================ PIXEL ART ============================ */
+const R = (x,y,w,h,c) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`;
+const SV = inner => `<svg class="px" viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">${inner}</svg>`;
+const GLASS="#cfc4ea", EMPTY="#251a38", CAP="#9b5cff";
+const C = {red:"#d8384f", yellow:"#ecc83c", orange:"#e9893a", purple:"#7a3cc8", blue:"#2f62d6", green:"#2f9a52", pink:"#ff5aa8", clear:"#e9e3f2", cream:"#e8ddb0", black:"#0b0610", white:"#fbf8ff"};
+
+function tube(inner, cap=CAP){
+  return R(12,8,8,22,EMPTY) + inner +
+    R(11,7,1,23,GLASS) + R(20,7,1,23,GLASS) + R(12,30,8,1,GLASS) +
+    R(11,3,10,4,cap) + R(12,2,8,1,cap) + R(13,10,1,16,"rgba(255,255,255,.28)");
+}
+const broth = (color, level=12) => R(12,level,8,30-level,color);
+function speckle(seed, color, x0,y0,w,h, n){ const r=rng(seed); let s=""; for(let i=0;i<n;i++) s+=R(x0+Math.floor(r()*w), y0+Math.floor(r()*h),1,1,color); return s; }
+function slant(top, butt){
+  let s = R(12,17,8,13,butt);
+  for(let y=10;y<17;y++){ const w=Math.min(8,2+(y-10)); s+=R(12,y,w,1,top); }
+  return s;
+}
+function tubeTSI(v, seed){
+  if(v.tsi==="NG") return SV(tube(slant(C.red,C.red)));
+  const top = v.tsi==="A/A" ? C.yellow : C.red;
+  let s = slant(top, C.yellow);
+  if(v.h2s==="+") s += R(12,18,8,11,C.black);
+  if(v.h2s==="w") s += R(14,17,4,2,C.black)+R(15,19,2,2,C.black);
+  if(v.gas==="+") s += R(12,27,8,1,EMPTY)+R(14,23,2,1,EMPTY)+R(17,21,1,1,EMPTY)+R(13,25,1,1,EMPTY);
+  return SV(tube(s));
+}
+function tubeColor(pos, neg, val, opt={}){
+  const col = (val==="+"||val==="25"||val==="rapid") ? pos : neg;
+  let s = broth(col, opt.level||12);
+  if(val==="rapid") s += speckle("r",C.white,12,14,8,14,8);
+  return SV(tube(s));
+}
+function tubeSlantColor(pos, neg, val){
+  const col = (val==="+"||val==="rapid") ? pos : neg;
+  return SV(tube(slant(col,col)));
+}
+function tubeRing(val, seed){ // indole
+  return SV(tube(broth(C.cream,12) + speckle(seed,"#cbbd86",12,15,8,14,10) + R(12,12,8,2, val==="+" ? "#e0244f" : "#f0d040")));
+}
+function tubeVP(val, seed){
+  const pos = val==="+"||val==="25";
+  return SV(tube(broth("#e6d6a4",12) + R(12,12,8,4, pos ? C.red : "#b98a4a")));
+}
+function tubeMot(val, seed){
+  let s = broth("#e9dfb8",11);
+  if(val==="NG") return SV(tube(s));
+  s += R(15,12,2,16,"#a58848");
+  if(val==="+"||val==="25"){ const r=rng(seed); const n = val==="25"?28:55; for(let i=0;i<n;i++){ const y=12+Math.floor(r()*17); const spread=1+Math.floor(r()*4); const x = r()<.5 ? 15-spread : 16+spread; s+=R(Math.max(12,Math.min(19,x)),y,1,1,"#b89a5a"); } }
+  return SV(tube(s));
+}
+function tubeUV(val){
+  const pos = val==="+";
+  let s = R(0,0,32,32,"#120626");
+  if(pos) s += R(9,9,14,22,"#123a5c") + R(10,8,12,23,"#1c5f8f");
+  s += tube(broth(pos ? "#6fe0ff" : "#2e2850", 11), "#5b3c9a");
+  s += R(3,3,2,2,"#9b5cff")+R(5,5,1,1,"#9b5cff")+R(2,6,1,1,"#9b5cff");
+  return SV(s);
+}
+function saltTubes(val, seed){
+  const t = val==="NG" ? ["-","-","-","-"] : val.split(" ");
+  let s = "";
+  [2,9,16,23].forEach((x,i)=>{
+    const grow = t[i]==="+";
+    s += R(x+1,10,5,18,EMPTY) + R(x+1,14,5,14, grow ? "#d8c98e" : "#c9dff0");
+    if(grow) s += speckle(seed+i,"#b9a865",x+1,15,5,12,7);
+    s += R(x,9,1,19,GLASS)+R(x+6,9,1,19,GLASS)+R(x+1,28,5,1,GLASS)+R(x,6,7,3,CAP);
+  });
+  s += `<text x="16" y="31.5" font-size="3.4" text-anchor="middle" fill="#cfc4ea" font-family="monospace">0  6  8  10</text>`;
+  return SV(s);
+}
+function plateBase(agar, rim="#d9d0ee"){
+  let s="";
+  for(let y=2;y<30;y++){
+    const dy=y+.5-16;
+    const ho=Math.round(Math.sqrt(Math.max(0,14*14-dy*dy)));
+    const hi=Math.round(Math.sqrt(Math.max(0,12.6*12.6-dy*dy)));
+    if(ho>0) s+=R(16-ho,y,ho*2,1,rim);
+    if(hi>0) s+=R(16-hi,y,hi*2,1,agar);
+  }
+  return s;
+}
+function colonyPts(seed, n, minR=0, maxR=10.5, size=2){
+  const r=rng(seed), pts=[]; let tries=0;
+  while(pts.length<n && tries<600){ tries++;
+    const x=4+Math.floor(r()*24), y=4+Math.floor(r()*24);
+    const d=Math.hypot(x+size/2-16,y+size/2-16);
+    if(d>maxR || d<minR) continue;
+    if(pts.some(p=>Math.abs(p[0]-x)<size+1 && Math.abs(p[1]-y)<size+1)) continue;
+    pts.push([x,y]);
+  }
+  return pts;
+}
+function plate(agar, colColors, seed, opt={}){
+  let s = plateBase(agar);
+  if(!colColors) return SV(s);
+  const pts = colonyPts(seed, opt.n||13, opt.minR||0);
+  if(opt.halo) pts.forEach(([x,y])=>{ s+=R(x-1,y-1,4,4,opt.halo); });
+  pts.forEach(([x,y],i)=>{ const c = Array.isArray(colColors) ? colColors[i%colColors.length] : colColors; s+=R(x,y,2,2,c); if(opt.dot) s+=R(x,y,1,1,opt.dot); });
+  return SV(s);
+}
+function diskPlate(val, seed){
+  if(val==="NA") return SV(plateBase("#8a6a3a") + R(14,14,4,4,C.white) + `<text x="16" y="10" font-size="5" text-anchor="middle" fill="#fff" font-family="monospace">N/A</text>`);
+  const zone = val==="S" ? 7.5 : val==="I" ? 5 : 3.2;
+  let s = plateBase("#c79a55");
+  const r=rng(seed);
+  for(let y=4;y<28;y++) for(let x=4;x<28;x++){
+    const d=Math.hypot(x+.5-16,y+.5-16);
+    if(d<12 && d>zone && r()<.55) s+=R(x,y,1,1,"#e8d6a6");
+  }
+  s += R(14,14,4,4,C.white)+R(15,15,2,2,"#d0c8e0");
+  return SV(s);
+}
+function gramSlide(shape, seed){
+  let s = R(1,9,30,14,"#f6e9f1") + R(1,9,30,1,C.white) + R(1,22,30,1,"#cdb9d6");
+  const r = rng(seed), P="#e0457f", D="#b0205a";
+  for(let i=0;i<16;i++){
+    const x=2+Math.floor(r()*25), y=11+Math.floor(r()*9);
+    if(shape==="rod") s+= r()<.5 ? R(x,y,3,1,P) : R(x,y,1,3,P);
+    else if(shape==="curved") s+= R(x,y,2,1,P)+R(x+2,y+1,1,1,P);
+    else if(shape==="seagull") s+= R(x,y+1,1,1,P)+R(x+1,y,1,1,P)+R(x+2,y+1,1,1,P)+R(x+3,y,1,1,P);
+    else if(shape==="spiral") s+= R(x,y,1,1,P)+R(x+1,y+1,1,1,P)+R(x+2,y,1,1,P)+R(x+3,y+1,1,1,P)+R(x+4,y,1,1,P);
+    else if(shape==="pin") s+= R(x,y,1,1,D)+R(x+1,y,1,1,"#f4b3cd")+R(x+2,y,1,1,D);
+  }
+  return SV(s);
+}
+function oxiPaper(val){
+  let s = R(5,5,22,22,"#fbf6ff") + R(5,5,22,1,C.white) + R(26,5,1,22,"#d6cce6") + R(5,26,22,1,"#d6cce6");
+  const c = val==="+" ? "#4a1f8f" : "#e6dcc8";
+  s += R(12,13,8,6,c) + R(13,12,6,8,c);
+  if(val==="+") s += R(11,15,1,2,"#6a3fb0")+R(20,14,1,2,"#6a3fb0");
+  return SV(s);
+}
+function catSlide(val, seed){
+  let s = R(1,10,30,12,"#dbe6f3") + R(1,10,30,1,C.white);
+  s += R(10,13,12,6,"#a9cbe9") + R(11,12,10,8,"#a9cbe9");
+  if(val==="+"){ const r=rng(seed); for(let i=0;i<9;i++){ const x=11+Math.floor(r()*9), y=12+Math.floor(r()*7); s+=R(x,y,2,2,C.white)+R(x,y,1,1,"#8fb7da"); } s+=R(13,7,2,2,C.white)+R(18,5,1,1,C.white)+R(16,8,1,1,C.white); }
+  return SV(s);
+}
+function stringSlide(val){
+  let s = R(1,20,30,10,"#dbe6f3") + R(1,20,30,1,C.white) + R(10,23,12,5,"#cfc5a6");
+  s += R(14,4,4,1,"#b0b0c0")+R(13,5,1,3,"#b0b0c0")+R(18,5,1,3,"#b0b0c0")+R(14,8,4,1,"#b0b0c0")+R(15,0,2,4,"#8080a0");
+  if(val==="+") s += R(15,9,2,3,"#efe4c0")+R(16,12,1,6,"#efe4c0")+R(15,18,2,5,"#efe4c0");
+  return SV(s);
+}
+function agglCard(labels, hit){
+  let s = R(1,6,30,22,"#f5f0fa") + R(1,6,30,1,C.white);
+  const xs=[2,9,16,23];
+  labels.forEach((l,i)=>{
+    const x=xs[i];
+    s += R(x+1,10,5,7,"#d9d0e4")+R(x,11,7,5,"#d9d0e4");
+    if(i===hit){ s += R(x+1,11,1,1,"#5a4a70")+R(x+3,12,2,1,"#5a4a70")+R(x+2,14,1,1,"#5a4a70")+R(x+4,15,1,1,"#5a4a70")+R(x+5,12,1,1,"#5a4a70")+R(x+1,15,1,1,"#5a4a70"); s += R(x+1,11,5,5,"rgba(255,255,255,.0)"); }
+    else s += R(x+2,12,3,3,"#e6dff0");
+    s += `<text x="${x+3.5}" y="23" font-size="4.2" text-anchor="middle" fill="#3a2a55" font-family="monospace" font-weight="bold">${l}</text>`;
+  });
+  return SV(s);
+}
+function chart(){
+  let s = R(6,3,20,27,"#9a6a35")+R(12,1,8,4,"#c0c0d0")+R(8,6,16,22,"#f5f0e0");
+  for(let y=9;y<26;y+=3) s+=R(10,y,12,1,"#a99fbf");
+  s += R(10,9,6,1,"#e0457f");
+  return SV(s);
+}
+function drawTest(tid, v, seed){
+  switch(tid){
+    case "gram": return gramSlide(v.gram, seed);
+    case "oxi": return oxiPaper(v.oxi);
+    case "cat": return catSlide(v.cat, seed);
+    case "mac": return lacPlate(v.mac, "#8f2f5a", seed);
+    case "smac": return lacPlate(v.smac, "#7a2f62", seed);
+    case "tsi": return tubeTSI(v, seed);
+    case "ind": return tubeRing(v.ind, seed);
+    case "cit": return tubeSlantColor(C.blue, C.green, v.cit);
+    case "mot": return tubeMot(v.mot, seed);
+    case "ure": return tubeSlantColor(C.pink, "#f0b860", v.ure);
+    case "ldc": return tubeColor(C.purple, C.yellow, v.ldc);
+    case "odc": return tubeColor(C.purple, C.yellow, v.odc);
+    case "vp": return tubeVP(v.vp, seed);
+    case "onpg": return tubeColor(C.yellow, C.clear, v.onpg, {level:14});
+    case "suc": return tubeColor(C.yellow, C.red, v.suc);
+    case "man": return tubeColor(C.yellow, C.red, v.man);
+    case "ara": return tubeColor(C.yellow, C.red, v.ara);
+    case "mal": return tubeColor(C.blue, C.green, v.mal);
+    case "mug": return tubeUV(v.mug);
+    case "nit": return tubeColor(C.red, C.clear, v.nit);
+    case "hipp": return tubeColor("#4b1f8f", C.clear, v.hipp, {level:16});
+    case "tcbs": return v.tcbs==="NG" ? plate("#2e8a68", null, seed) : plate("#2e8a68", v.tcbs==="Y" ? C.yellow : "#7cf0b8", seed, {dot: v.tcbs==="G" ? "#1b5c3e" : null});
+    case "nacl": return saltTubes(v.nacl, seed);
+    case "string": return stringSlide(v.string);
+    case "o129": return diskPlate(v.o129, seed);
+    case "nal": return diskPlate(v.nal, seed);
+    case "ceph": return diskPlate(v.ceph, seed);
+    case "dnase": return plate("#2f7f88", "#ebe2d0", seed, {halo: v.dnase==="+" ? "#bff0ea" : null, n:7});
+    case "hemo": return plate("#8c1a2c", "#e3dccb", seed, {halo: v.hemo==="+" ? "#e7707e" : null, n:9});
+    case "t42": return plate("#8c1a2c", v.t42==="+" ? "#d8d0c4" : null, seed, {n:16});
+    case "shig": return agglCard(["A","B","C","D"], ["A","B","C","D"].indexOf(v.shig));
+    case "salm": return agglCard(["A","B","C1","D"], ({A:0,B:1,C1:2,"D/Vi":3})[v.salm] ?? -1);
+    case "hx": return chart();
+  }
+  return SV("");
+}
+function lacPlate(val, agar, seed){
+  if(val==="NG") return plate(agar, null, seed);
+  if(val==="+") return plate(agar, "#ff8cc4", seed, {dot:"#c2307a"});
+  if(val==="late") return plate(agar, ["#f6e8dc","#f2a6c8"], seed);
+  return plate(agar, "#f6e8dc", seed);
+}
+// small icons
+const ICON = {
+  heart: SV(R(6,8,8,4,"#ff4f6a")+R(18,8,8,4,"#ff4f6a")+R(4,10,24,8,"#ff4f6a")+R(6,18,20,4,"#ff4f6a")+R(10,22,12,3,"#ff4f6a")+R(14,25,4,3,"#ff4f6a")+R(8,10,4,3,"#ffb0c0")),
+  coin: SV(R(10,4,12,2,"#ffd166")+R(6,6,20,20,"#ffd166")+R(10,26,12,2,"#ffd166")+R(4,10,2,12,"#ffd166")+R(26,10,2,12,"#ffd166")+R(14,9,4,14,"#b8892e")+R(11,11,10,3,"#b8892e")+R(11,18,10,3,"#b8892e")),
+  dish: SV(plateBase("#8f2f5a").replace(/^/,"")+R(9,10,2,2,"#ff8cc4")+R(18,8,2,2,"#ff8cc4")+R(14,15,2,2,"#f6e8dc")+R(20,18,2,2,"#ff8cc4")+R(10,19,2,2,"#f6e8dc")),
+  doorP: SV(R(7,3,18,27,"#4a3373")+R(9,5,14,25,"#6d3fd1")+R(20,16,2,2,"#ffd166")+R(12,8,8,6,"#bfa8ff")),
+  doorU: SV(R(7,3,18,27,"#5a1a2c")+R(9,5,14,25,"#c2307a")+R(20,16,2,2,"#ffd166")+R(14,7,4,8,"#fff")+R(14,17,4,3,"#fff")),
+  doorB: SV(R(7,3,18,27,"#1f3a30")+R(9,5,14,25,"#2f8a68")+R(20,16,2,2,"#ffd166")+R(12,9,8,5,"#e8ddb0")+R(13,8,6,1,"#e8ddb0")),
+  boss: SV(R(4,4,24,24,"#2e0f1f")+R(6,6,20,20,"#ff5a6a")+R(10,11,4,4,"#120b1e")+R(18,11,4,4,"#120b1e")+R(11,19,10,2,"#120b1e")+R(12,21,2,2,"#120b1e")+R(18,21,2,2,"#120b1e")),
+};
+
+/* ============================ GAME LOGIC ============================ */
+function resolveOrg(o){
+  const r = {};
+  for(const c of COLS){
+    let v = o[c];
+    if(c==="nacl" && v!=="NG") v = v.split(" ").map(t => t==="V" ? (Math.random()<.5?"+":"-") : t).join(" ");
+    else if(v==="V") v = (c==="nal"||c==="ceph") ? rand(["S","R"]) : rand(["+","-"]);
+    r[c]=v;
+  }
+  return r;
+}
+function colSeparates(c, x, y){
+  if(c==="nacl"){
+    if(x==="NG"||y==="NG") return x!==y;
+    const X=x.split(" "), Y=y.split(" ");
+    return X.some((t,i)=>t!=="V" && Y[i]!=="V" && t!==Y[i]);
+  }
+  if(x==="V"||y==="V"||x==="NA"||y==="NA") return false;
+  return x!==y;
+}
+function sepTests(a, b){ return Object.keys(TESTS).filter(t => t!=="hx" && TESTS[t].cols.some(c => colSeparates(c, ORG[a][c], ORG[b][c]))); }
+function sharedTests(a, b){
+  return ["gram","oxi","cat","ind","mot","mac","cit","ure","nit","ldc","tsi"].filter(t =>
+    TESTS[t].cols.every(c => { const x=ORG[a][c], y=ORG[b][c]; return x===y && !["V","NA","NG"].includes(x); }));
+}
+const run = () => S.run;
+const cardCost = tid => Math.max(0, TESTS[tid].cost - ((run() && run().disc[tid])||0));
+const upCount = k => (run() && run().ups[k]) || 0;
+
+function pickOrg(r, exclude=[]){
+  const pool = poolFor(r.floor).filter(id => !exclude.includes(id) && id!==r.lastOrg);
+  const min = Math.min(...pool.map(id => r.seen[id]||0));
+  return rand(pool.filter(id => (r.seen[id]||0)===min));
+}
+function genDoors(r, level){
+  if(level===0){ const a=mkDoor(r,"patient"); return [a, mkDoor(r,"patient",[a.org])]; }
+  const pick = () => { const x=Math.random(); return x<.58 ? "patient" : x<.8 ? "urgent" : "break"; };
+  let a=pick(), b=pick();
+  if(a==="break" && b==="break") b="patient";
+  if(a===b && a!=="patient") b="patient";
+  const da = mkDoor(r,a);
+  return [da, mkDoor(r,b,[da.org])];
+}
+function mkDoor(r, type, exclude=[]){
+  if(type==="break") return {type};
+  return {type, org: pickOrg(r, exclude), bed: 1+Math.floor(Math.random()*40)};
+}
+function newRun(floor){
+  const F = FLOORS[floor];
+  const bosses = bossesFor(floor);
+  S.run = {floor, hp:BASE_HP, maxhp:BASE_HP, deck:[...F.start], disc:{}, ups:{}, level:0, score:0, solved:0, seen:{}, lastOrg:null,
+           boss: BOSSES.indexOf(rand(bosses)), screen:"map", room:null, reward:null, doors:null, rid:0};
+  S.run.doors = genDoors(S.run, 0);
+  S.stats.runs++;
+  UI.screen="run"; UI.sel=null; save(); render(); window.scrollTo(0,0);
+}
+function chooseDoor(i){
+  const r = run(); const F = FLOORS[r.floor];
+  if(r.level >= F.levels){ enterBoss(); return; }
+  const d = r.doors[i];
+  if(d.type==="break"){ r.screen="break"; r.reward = genBreak(); save(); render(); window.scrollTo(0,0); return; }
+  enterRoom(d.type, d.org, d.bed);
+}
+function budgetFor(type){ return (type==="patient" ? BASE_BUDGET : 6) + 2*upCount("bulk"); }
+function enterRoom(type, org, bed, setup){
+  const r = run(); r.rid++;
+  r.lastOrg = org; r.seen[org] = (r.seen[org]||0)+1;
+  r.room = {type, org, bed, budget:budgetFor(type), spent:0, played:[], pre:[], wrong:[], struck:[], res:resolveOrg(ORG[org]), freeUsed:false, halfUsed:false, done:false, loaner:null, pair:null, seed:"r"+r.rid+Math.random()};
+  if(setup) setup(r.room);
+  r.screen="room"; UI.sel=null; UI.fresh=null; save(); render(); window.scrollTo(0,0);
+}
+function enterBoss(){
+  const r = run(); const B = BOSSES[r.boss];
+  const org = rand([B.a, B.b]);
+  enterRoom("boss", org, 99, room => {
+    room.pair = [B.a, B.b];
+    // Routine workup already done: tests where the look-alikes match
+    room.pre = shuffle(sharedTests(B.a, B.b)).slice(0,3);
+    room.played = [...room.pre];
+    const sep = sepTests(B.a, B.b);
+    if(!sep.some(t => r.deck.includes(t))) room.loaner = sep.sort((x,y)=>TESTS[x].cost-TESTS[y].cost)[0];
+  });
+}
+function suspects(){
+  const r = run(); const room = r.room;
+  return room.pair ? room.pair : poolFor(r.floor);
+}
+function playCard(tid){
+  const r = run(), room = r.room;
+  if(!room || room.done || room.played.includes(tid)) return;
+  let cost = cardCost(tid);
+  if(room.loaner===tid) cost = TESTS[tid].cost + 1;
+  const free = upCount("auto") && !room.freeUsed && cost>0;
+  if(free) cost = 0;
+  const left = room.budget - room.spent;
+  const over = Math.max(0, cost - Math.max(0,left));
+  const doIt = () => {
+    if(free) room.freeUsed = true;
+    room.spent += cost; room.played.push(tid); UI.fresh = tid;
+    if(over>0){ r.hp -= over; toast(`Overtime! −${over} HP`, "bad"); }
+    if(r.hp<=0){ die(`Worked yourself into the ground running ${TESTS[tid].name} on overtime.`); return; }
+    save(); render();
+  };
+  if(over>0){
+    modal(`<h2>Overtime</h2><p>${esc(TESTS[tid].name)} costs <b class="gold">$${cost}</b> but only <b>$${Math.max(0,left)}</b> of budget is left.</p><p>Running it anyway costs <b class="bad">${over} HP</b>.</p>`,
+      [{label:`Run it (−${over} HP)`, cls:"pink", fn:doIt},{label:"Cancel", cls:"ghost"}]);
+  } else doIt();
+}
+function identify(id){
+  const r = run(), room = r.room;
+  if(!room || room.done) return;
+  if(id===room.org){
+    room.done = true;
+    S.codex[id] = (S.codex[id]||0)+1;
+    S.stats.cases++;
+    const left = Math.max(0, room.budget-room.spent);
+    const gain = 10 + left*3 + (room.type==="urgent"?10:0) + (room.type==="boss"?50:0) - room.wrong.length*3;
+    room.gain = Math.max(5, gain);
+    room.firstTime = S.codex[id]===1;
+    r.score += room.gain; r.solved++;
+    const heal = 3*upCount("rapid");
+    if(heal){ r.hp = Math.min(r.maxhp, r.hp+heal); }
+    UI.sel=null; save(); render(); window.scrollTo(0,0);
+  } else {
+    let dmg = DMG[room.type];
+    if(upCount("second") && !room.halfUsed){ dmg = Math.ceil(dmg/2); room.halfUsed = true; }
+    r.hp -= dmg;
+    room.wrong.push(id);
+    if(!room.struck.includes(id)) room.struck.push(id);
+    UI.sel = null;
+    if(r.hp<=0){ die(`Misidentified the isolate as ${fullName(ORG[id])}. It was ${fullName(ORG[room.org])}.`); return; }
+    toast(`Wrong! Not ${shortName(ORG[id])}. −${dmg} HP`, "bad");
+    save(); render();
+    const app=$("#app"); app.classList.remove("shake"); void app.offsetWidth; app.classList.add("shake");
+  }
+}
+function toggleStrike(id){
+  const room = run().room; const i = room.struck.indexOf(id);
+  if(i>=0){ if(!room.wrong.includes(id)) room.struck.splice(i,1); } else room.struck.push(id);
+  UI.sel=null; save(); render();
+}
+function afterRoom(){
+  const r = run(), room = r.room;
+  if(room.type==="boss"){ winRun(); return; }
+  r.reward = genRewards(room.type==="urgent" ? 2 : 1);
+  r.screen = "reward"; save(); render(); window.scrollTo(0,0);
+}
+function unownedCards(r){ return Object.keys(TESTS).filter(t => !r.deck.includes(t)); }
+function weightedNewCard(r, exclude=[]){
+  const all = unownedCards(r).filter(t=>!exclude.includes(t));
+  if(!all.length) return null;
+  // Prefer tests that actually separate organisms on this floor
+  const pool = poolFor(r.floor);
+  const useful = all.filter(t => t==="hx" || TESTS[t].cols.some(c => { const vals = new Set(pool.map(id=>ORG[id][c]).filter(v=>v!=="V"&&v!=="NA")); return vals.size>1; }));
+  return rand(useful.length ? useful : all);
+}
+function randomUpgrade(r, exclude=[]){
+  const keys = Object.keys(UPGRADES).filter(k => !exclude.includes(k) && (UPGRADES[k].stack || !r.ups[k]));
+  let k = rand(keys);
+  if(k==="disc"){
+    const cands = r.deck.filter(t => cardCost(t)>=1);
+    const pref = cands.filter(t => cardCost(t)>=2);
+    const card = rand(pref.length && Math.random()<.7 ? pref : cands);
+    if(!card) k = "bulk"; else return {t:"up", k, card};
+  }
+  return {t:"up", k};
+}
+function genRewards(picks){
+  const r = run(); const opts = [];
+  const card = weightedNewCard(r);
+  if(card) opts.push({t:"card", id:card});
+  const u1 = randomUpgrade(r); opts.push(u1);
+  if(!card) opts.push(randomUpgrade(r, [u1.k]));
+  opts.push({t:"heal", n:HEAL});
+  return {opts, picks, taken:[]};
+}
+function genBreak(){
+  const r = run();
+  const opts = [{t:"heal", n:12}];
+  const d = randomUpgrade(r, ["bulk","tenure","second","auto","rapid"]);
+  if(d.k==="disc") opts.push(d);
+  const c = weightedNewCard(r); if(c) opts.push({t:"card", id:c});
+  return {opts, picks:1, taken:[], brk:true};
+}
+function applyReward(o){
+  const r = run();
+  if(o.t==="card") r.deck.push(o.id);
+  else if(o.t==="heal") r.hp = Math.min(r.maxhp, r.hp+o.n);
+  else if(o.t==="up"){
+    r.ups[o.k] = (r.ups[o.k]||0)+1;
+    if(o.k==="tenure"){ r.maxhp += 6; r.hp = Math.min(r.maxhp, r.hp+6); }
+    if(o.k==="disc") r.disc[o.card] = (r.disc[o.card]||0)+1;
+  }
+}
+function takeReward(i){
+  const r = run(), rw = r.reward;
+  if(rw.taken.includes(i) || rw.taken.length>=rw.picks) return;
+  rw.taken.push(i); applyReward(rw.opts[i]);
+  if(rw.taken.length>=rw.picks) nextLevel(); else { save(); render(); }
+}
+function nextLevel(){
+  const r = run();
+  r.level++; r.room = null; r.reward = null;
+  r.doors = r.level < FLOORS[r.floor].levels ? genDoors(r, r.level) : null;
+  r.screen = "map"; save(); render(); window.scrollTo(0,0);
+}
+function winRun(){
+  const r = run(); const F = FLOORS[r.floor];
+  const unlocked = F.next && !S.unlocked[F.next] ? F.next : null;
+  if(F.next) S.unlocked[F.next] = true;
+  S.stats.wins++;
+  S.stats.best[r.floor] = Math.max(S.stats.best[r.floor]||0, r.score);
+  S.last = {win:true, floor:r.floor, score:r.score, solved:r.solved, unlocked, boss:r.boss};
+  S.run = null; UI.screen="end"; save(); render(); window.scrollTo(0,0);
+}
+function die(msg){
+  const r = run();
+  S.stats.deaths++;
+  S.stats.best[r.floor] = Math.max(S.stats.best[r.floor]||0, r.score);
+  S.last = {win:false, floor:r.floor, score:r.score, solved:r.solved, msg, org: r.room ? r.room.org : null};
+  S.run = null; UI.screen="end"; UI.modal=null; save(); render(); window.scrollTo(0,0);
+}
+
+/* ============================ UI: MODAL / TOAST ============================ */
+let modalFns = [];
+function modal(html, buttons=[{label:"Close", cls:"ghost"}]){
+  modalFns = buttons.map(b=>b.fn||null);
+  UI.modal = `<div class="modal" data-a="modalbg"><div class="box">${html}<div class="row" style="margin-top:14px">${buttons.map((b,i)=>`<button class="btn ${b.cls||""}" data-a="modalbtn" data-v="${i}">${esc(b.label)}</button>`).join("")}</div></div></div>`;
+  renderModal();
+}
+function closeModal(){ UI.modal=null; renderModal(); }
+function renderModal(){
+  let m = $("#modalroot"); if(!m){ m=document.createElement("div"); m.id="modalroot"; document.body.appendChild(m); }
+  m.innerHTML = UI.modal || "";
+}
+let toastT;
+function toast(msg, cls=""){
+  let t = $("#toast"); if(!t){ t=document.createElement("div"); t.id="toast"; document.body.appendChild(t); }
+  t.className = "toast "+cls; t.textContent = msg; t.style.display="block";
+  clearTimeout(toastT); toastT = setTimeout(()=>{ t.style.display="none"; }, 2200);
+}
+
+/* ============================ UI: SCREENS ============================ */
+function hud(){
+  const r = run(); const room = r.room;
+  const hpPct = Math.max(0, r.hp/r.maxhp*100);
+  let budget = "";
+  if(r.screen==="room" && room){
+    const left = room.budget-room.spent;
+    budget = `<div class="meter">${ICON.coin.replace('class="px"','class="px ico"')}<span class="${left<0?"bad":"gold"}">$${left}</span><span class="muted">/ ${room.budget}</span></div>`;
+  }
+  return `<div class="hud">
+    <div class="meter">${ICON.heart.replace('class="px"','class="px ico"')}<div class="bar"><i style="width:${hpPct}%;--c:${hpPct>35?"#ff4f6a":"#ff2040"}"></i></div><span>${r.hp}/${r.maxhp}</span></div>
+    ${budget}
+    <div class="spacer"></div>
+    <span class="muted" title="Score">★ <b class="pinkt">${r.score}</b></span>
+    <button class="btn small ghost" data-a="menu">☰</button>
+  </div>`;
+}
+function screenTitle(){
+  const codexN = Object.keys(S.codex).length;
+  const r = S.run;
+  return `
+  <div class="logo">CULTURE SHOCK</div>
+  <div class="sub">a clinical bacteriology roguelike</div>
+  <div class="hero">${ICON.dish}${tubeTSI({tsi:"K/A",gas:"+",h2s:"+"},"t")}${drawTest("tcbs",{tcbs:"Y"},"h")}${gramSlide("curved","g")}</div>
+  ${r ? `<div class="panel pinkb"><div class="row"><div><b>Run in progress</b><div class="muted">${FLOORS[r.floor].name} · room ${Math.min(r.level+1, FLOORS[r.floor].levels+1)} · ${r.hp}/${r.maxhp} HP · score ${r.score}</div></div><div class="spacer"></div><button class="btn pink" data-a="continue">Continue</button></div></div>` : ""}
+  <h3>${r ? "Or start over (abandons current run)" : "Choose a floor"}</h3>
+  <div class="floors">
+    ${Object.entries(FLOORS).map(([k,F])=>{
+      const open = S.unlocked[k];
+      return `<button class="btn floorbtn" data-a="newrun" data-v="${k}" ${open?"":"disabled"}>
+        <b>${open?"":"🔒 "}Floor ${F.n} · ${F.name}</b>
+        <span class="muted">${open ? F.blurb : "Clear the previous floor's boss to unlock."}</span>
+        <span class="muted" style="font-size:11px">${F.levels} rooms + boss${S.stats.best[k] ? ` · best ${S.stats.best[k]}` : ""}</span>
+      </button>`;}).join("")}
+  </div>
+  <div class="row" style="margin-top:16px">
+    <button class="btn" data-a="codex">Codex ${codexN}/${ORGANISMS.length}</button>
+    <button class="btn" data-a="help">How to play</button>
+    <div class="spacer"></div>
+    <button class="btn ghost small" data-a="reset">Reset save</button>
+  </div>
+  <p class="muted" style="margin-top:14px;font-size:12px">Runs ${S.stats.runs} · Floors cleared ${S.stats.wins} · Deaths ${S.stats.deaths} · Cases solved ${S.stats.cases}</p>`;
+}
+function screenMap(){
+  const r = run(), F = FLOORS[r.floor], B = BOSSES[r.boss];
+  let cells = "";
+  for(let i=0;i<=F.levels;i++){
+    const boss = i===F.levels;
+    cells += `<div class="cell ${i<r.level?"done":""} ${i===r.level?"now":""} ${boss?"boss":""}">${boss?"B":i+1}</div>`;
+  }
+  let doors;
+  if(r.level >= F.levels){
+    doors = `<button class="btn pink door" data-a="door" data-v="0">${ICON.boss}<div><b class="bad">Boss · ${esc(B.name)}</b><span class="muted">Two look-alike organisms. Budget $${budgetFor("boss")}. Wrong ID: −${DMG.boss} HP. Only the right test separates them.</span></div></button>`;
+  } else {
+    doors = r.doors.map((d,i)=>{
+      if(d.type==="break") return `<button class="btn door" data-a="door" data-v="${i}">${ICON.doorB}<div><b class="good">Break Room</b><span class="muted">Rest, study, or restock. No patient.</span></div></button>`;
+      const o = ORG[d.org];
+      const urg = d.type==="urgent";
+      return `<button class="btn door ${urg?"pink":""}" data-a="door" data-v="${i}">${urg?ICON.doorU:ICON.doorP}<div><b class="${urg?"pinkt":""}">${urg?"Urgent":"Patient"} · Bed ${d.bed}</b><span>Specimen: ${esc(o.specimen)}</span><br><span class="muted">${urg?`Budget $${budgetFor("urgent")}, wrong ID −${DMG.urgent} HP. Pick 2 rewards.`:`Budget $${budgetFor("patient")}, wrong ID −${DMG.patient} HP.`}</span></div></button>`;
+    }).join("");
+  }
+  return `${hud()}
+  <h2>Floor ${F.n} · ${F.name}</h2>
+  <div class="corridor">${cells}</div>
+  <p class="muted">Boss of this floor: <b class="bad">${esc(B.name)}</b> — prepare a test that separates look-alikes.</p>
+  <h3>Choose a door</h3>
+  <div class="doors">${doors}</div>
+  <div class="row" style="margin-top:16px">
+    <button class="btn small" data-a="deck">Lab kit (${r.deck.length})</button>
+    <button class="btn small" data-a="ups">Upgrades (${Object.values(r.ups).reduce((a,b)=>a+b,0)})</button>
+    <button class="btn small" data-a="codex">Codex</button>
+  </div>`;
+}
+function resultCard(tid, v, org, seed, fresh, pre){
+  return `<div class="res ${fresh?"new":""}">${drawTest(tid, v, seed+tid)}<div><div class="rn">${esc(TESTS[tid].name)}${pre?` <span class="tag">routine</span>`:""}</div><div class="rr">${esc(readTest(tid, v, org))}</div></div></div>`;
+}
+function screenRoom(){
+  const r = run(), room = r.room, o = ORG[room.org], F = FLOORS[r.floor];
+  const typeTag = room.type==="boss" ? `<span class="tag bad">Boss</span>` : room.type==="urgent" ? `<span class="tag pink">Urgent</span>` : `<span class="tag">Patient</span>`;
+  let head = `${hud()}
+    <div class="row"><h2>${room.type==="boss" ? esc(BOSSES[r.boss].name) : `Bed ${room.bed}`}</h2>${typeTag}<div class="spacer"></div><span class="muted">${F.name} · ${room.type==="boss"?"Boss":`Room ${r.level+1}/${F.levels}`}</span></div>
+    <p>Specimen: <b>${esc(o.specimen)}</b>. ${room.type==="boss" ? "" : "Culture grew a single organism. Identify it."}</p>`;
+  if(room.type==="boss"){
+    const [a,b] = room.pair;
+    head += `<div class="banner"><b>Look-alikes!</b><p>It's either <i>${esc(fullName(ORG[a]))}</i> or <i>${esc(fullName(ORG[b]))}</i>. The routine workup can't tell them apart — find the test that does.${room.loaner?` <span class="gold">Reference lab sent a LOANER test.</span>`:""}</p></div>`;
+  }
+  // Solved panel
+  if(room.done){
+    const sepNote = room.type==="boss" ? `<p class="gold">${esc(BOSSES[r.boss].lesson)}</p>` : "";
+    return head + `<div class="panel pinkb">
+      <h2 class="good" style="color:var(--good)">✔ Identified</h2>
+      <p style="font-size:18px"><i><b>${esc(fullName(o))}</b></i></p>
+      ${sepNote}
+      <p><b>Key:</b> ${esc(o.key)}</p>
+      <p class="muted">+${room.gain} score${room.firstTime?` · <span class="gold">New Codex entry!</span>`:""}${upCount("rapid")?` · Rapid Workup +${3*upCount("rapid")} HP`:""}</p>
+      <button class="btn pink wide" data-a="after">${room.type==="boss"?"Clear the floor":"Collect reward"}</button>
+    </div>
+    <h3>Your workup</h3><div class="results">${[...room.played].reverse().map(t=>resultCard(t, room.res, o, room.seed, false, room.pre.includes(t))).join("")}</div>`;
+  }
+  // Hand
+  const hand = [...r.deck, ...(room.loaner && !r.deck.includes(room.loaner) ? [room.loaner] : [])];
+  const freeNext = upCount("auto") && !room.freeUsed;
+  const cards = hand.map(tid=>{
+    const used = room.played.includes(tid);
+    let cost = room.loaner===tid ? TESTS[tid].cost+1 : cardCost(tid);
+    const free = freeNext && cost>0;
+    return `<button class="btn card ${used?"used":""} ${room.loaner===tid?"loan":""}" data-a="play" data-v="${tid}" ${used?"disabled":""}>
+      <span class="cost ${free?"free":""}">$${free?0:cost}</span>
+      <span class="ct">${esc(TESTS[tid].name)}</span><span class="cs">${room.loaner===tid?"Loaner":TESTS[tid].cat}</span></button>`;
+  }).join("");
+  const results = room.played.length
+    ? `<div class="results">${[...room.played].reverse().map(t=>resultCard(t, room.res, o, room.seed, t===UI.fresh, room.pre.includes(t))).join("")}</div>`
+    : `<p class="muted">No tests run yet. Tap a test card above. Each costs lab budget; going over budget costs HP.</p>`;
+  // Suspects grouped by genus
+  const sus = suspects();
+  const left = sus.filter(id=>!room.struck.includes(id)).length;
+  const genera = [...new Set(sus.map(id=>ORG[id].genus))];
+  const susHtml = genera.map(g=>`<h4>${g}</h4><div class="chips">${sus.filter(id=>ORG[id].genus===g).map(id=>{
+      const cls = room.wrong.includes(id) ? "wrong" : room.struck.includes(id) ? "struck" : "";
+      return `<button class="chip ${cls} ${UI.sel===id?"sel":""}" data-a="sel" data-v="${id}">${esc(ORG[id].sp)}</button>`;
+    }).join("")}</div>`).join("");
+  const sel = UI.sel ? ORG[UI.sel] : null;
+  const act = `<div class="actbar"><div class="in">${sel
+      ? `<button class="btn small ghost" data-a="strike" data-v="${sel.id}">${room.struck.includes(sel.id)?"Restore":"Cross out"}</button><button class="btn pink" data-a="id" data-v="${sel.id}" ${room.wrong.includes(sel.id)?"disabled":""}>Identify: <i>${esc(shortName(sel))}</i></button>`
+      : `<button class="btn" data-a="tosus">Suspects (${left} left) ▼ tap one to identify</button>`}</div></div>`;
+  return head + `
+    <h3>Lab tests</h3><div class="hand">${cards}</div>
+    <h3>Results</h3>${results}
+    <h3 id="sus">Suspects · ${left} left</h3><div class="sus">${susHtml}</div>
+    <p class="muted" style="font-size:12px">Tap a suspect, then Identify (wrong: −${DMG[room.type]} HP${upCount("second")&&!room.halfUsed?", halved once":""}) or Cross out to keep notes.</p>
+    ${act}`;
+}
+function rewardHtml(o, i, rw){
+  const taken = rw.taken.includes(i);
+  const done = rw.taken.length>=rw.picks;
+  let title, body, tag;
+  if(o.t==="card"){ tag=`<span class="tag gold">New test</span>`; title=TESTS[o.id].name; body=`$${TESTS[o.id].cost} · ${TESTS[o.id].desc}`; }
+  else if(o.t==="heal"){ tag=`<span class="tag good">Heal</span>`; title=`+${o.n} HP`; body=`Coffee, snack, and five minutes sitting down.`; }
+  else { const U=UPGRADES[o.k]; tag=`<span class="tag pink">Upgrade</span>`; title = o.k==="disc" ? `Discount: ${TESTS[o.card].name}` : U.name; body = o.k==="disc" ? `${TESTS[o.card].name} costs 1 less (now $${Math.max(0,cardCost(o.card)-1)}).` : U.desc; }
+  return `<button class="btn reward ${taken?"picked":""}" data-a="reward" data-v="${i}" ${taken||done?"disabled":""}>${tag}<b>${esc(title)}</b><span class="muted">${esc(body)}</span></button>`;
+}
+function screenReward(){
+  const r = run(), rw = r.reward;
+  const brk = rw.brk;
+  return `${hud()}
+    <h2>${brk ? "Break Room" : "Case closed"}</h2>
+    <p class="muted">${brk ? "Choose one." : rw.picks>1 ? `Urgent case bonus: choose ${rw.picks - rw.taken.length} more.` : "Choose 1 of 3 rewards."}</p>
+    <div class="rewards">${rw.opts.map((o,i)=>rewardHtml(o,i,rw)).join("")}</div>
+    <div class="row" style="margin-top:14px"><button class="btn small" data-a="deck">Lab kit</button><div class="spacer"></div><button class="btn ghost small" data-a="skip">Skip</button></div>`;
+}
+function screenEnd(){
+  const L = S.last || {};
+  const F = FLOORS[L.floor] || FLOORS.enteric;
+  if(L.win){
+    const B = BOSSES[L.boss];
+    return `<div class="logo" style="font-size:clamp(26px,7vw,40px)">FLOOR CLEARED</div>
+    <div class="panel pinkb">
+      <p>You beat <b class="bad">${esc(B?B.name:"the boss")}</b> and cleared <b>${F.name}</b>.</p>
+      <p>Cases solved: <b>${L.solved}</b> · Score: <b class="pinkt">${L.score}</b></p>
+      ${L.unlocked ? `<p class="gold">★ Unlocked: Floor ${FLOORS[L.unlocked].n} · ${FLOORS[L.unlocked].name}</p>` : F.next ? "" : `<p class="gold">★ You've cleared the Mixed Ward. Go chase a high score.</p>`}
+    </div>
+    <div class="row"><button class="btn pink" data-a="title">Main menu</button><button class="btn" data-a="codex">Codex</button></div>`;
+  }
+  const o = L.org ? ORG[L.org] : null;
+  return `<div class="logo" style="font-size:clamp(26px,7vw,40px);color:var(--bad)">CODE BLUE</div>
+    <div class="panel" style="border-color:var(--bad)">
+      <p>${esc(L.msg||"You collapsed.")}</p>
+      ${o ? `<p><b>Key for ${esc(fullName(o))}:</b> ${esc(o.key)}</p>` : ""}
+      <p>${F.name} · cases solved: <b>${L.solved}</b> · score <b class="pinkt">${L.score}</b></p>
+      <p class="muted">Permadeath: the run is over. Your Codex and unlocked floors are kept.</p>
+    </div>
+    <div class="row"><button class="btn pink" data-a="title">Main menu</button><button class="btn" data-a="codex">Codex</button></div>`;
+}
+function screenCodex(){
+  const genera = [...new Set(ORGANISMS.map(o=>o.genus))];
+  const n = Object.keys(S.codex).length;
+  return `<div class="row" style="margin:6px 0 10px"><h2>Codex</h2><span class="tag gold">${n}/${ORGANISMS.length}</span><div class="spacer"></div><button class="btn small" data-a="back">Back</button></div>
+  <p class="muted">Identify an organism in a run to unlock its key test results.</p>
+  ${genera.map(g=>`<h3>${g}</h3><div class="cgrid">${ORGANISMS.filter(o=>o.genus===g).map(o=>{
+    const k = S.codex[o.id];
+    return k ? `<button class="btn centry" data-a="entry" data-v="${o.id}">${esc(shortName(o))} <span class="muted" style="font-style:normal">×${k}</span></button>`
+             : `<button class="btn centry locked" disabled>${g[0]}. ??????</button>`;
+  }).join("")}</div>`).join("")}`;
+}
+function codexEntry(id){
+  const o = ORG[id];
+  const rows = Object.keys(TESTS).filter(t=>t!=="hx").map(t=>`<tr><td>${esc(TESTS[t].name)}</td><td class="v">${esc(codeTest(t,o))}</td><td>${esc(readTest(t,o,o))}</td></tr>`).join("");
+  const bosses = BOSSES.filter(b=>b.a===id||b.b===id);
+  modal(`<h2><i>${esc(fullName(o))}</i></h2>
+    <p class="muted">Specimen: ${esc(o.specimen)} · identified ×${S.codex[id]||0}</p>
+    <div class="row" style="margin:8px 0">${drawTest("gram",o,"cx"+id)}${drawTest("tsi",o,"cx")}${drawTest("mac",o,"cx"+id)}</div>
+    <p><b>Classic case:</b> ${esc(o.hx)}</p>
+    <p><b class="gold">Key:</b> ${esc(o.key)}</p>
+    ${bosses.map(b=>`<p><b class="bad">${esc(b.name)}</b> (vs ${esc(shortName(ORG[b.a===id?b.b:b.a]))}): ${esc(b.lesson)}</p>`).join("")}
+    <h3>All results</h3><table class="ct">${rows}</table>`);
+}
+function screenHelp(){
+  return `<div class="row" style="margin:6px 0 10px"><h2>How to play</h2><div class="spacer"></div><button class="btn small" data-a="back">Back</button></div>
+  <div class="panel"><ul class="rules">
+    <li>A <b>run</b> is one hospital floor: a corridor of rooms ending in a <b class="bad">boss</b>. At each step pick a door.</li>
+    <li><b>Patient</b> rooms hide one organism from the floor's list. Specimen type is shown on the door.</li>
+    <li>Your <b>lab tests</b> are cards. Tap one to run it: it costs <b class="gold">lab budget</b> and reveals a drawn tube/plate plus a one-line reading. Each test runs once per room.</li>
+    <li>Over budget? You can still run a test, but each missing $ costs 1 HP (overtime).</li>
+    <li>Tap a suspect → <b>Identify</b>. Right: solve the case, unspent budget becomes score. Wrong: lose HP (Patient ${DMG.patient}, Urgent ${DMG.urgent}, Boss ${DMG.boss}).</li>
+    <li><b class="pinkt">Urgent</b> rooms have less budget and hit harder but give 2 rewards. <b class="good">Break rooms</b> let you heal, study (discount) or restock.</li>
+    <li>After a case choose <b>1 of 3 rewards</b>: a new test card, an upgrade, or healing.</li>
+    <li><b class="bad">Bosses</b> are look-alike pairs. The shared routine workup is pre-run for free; find the test that separates them. If you don't own one, the reference lab sends a pricey loaner.</li>
+    <li><b>Permadeath.</b> At 0 HP the run ends. Clearing a floor's boss unlocks the next floor: Enterics → Non-enterics → Mixed.</li>
+    <li><b>Variable (V)</b> results are rolled per patient, like real strains. The Codex shows the textbook pattern.</li>
+    <li>Progress, Codex and your current run are saved in this browser automatically.</li>
+  </ul></div>
+  <h3>Reading the art</h3>
+  <div class="results">
+    ${resultCard("tsi",{tsi:"K/A",gas:"+",h2s:"+"},ORG.ecoli,"h",false)}
+    ${resultCard("tsi",{tsi:"A/A",gas:"+",h2s:"-"},ORG.ecoli,"h",false)}
+    ${resultCard("mac",{mac:"+"},ORG.ecoli,"h",false)}
+    ${resultCard("tcbs",{tcbs:"G"},ORG.ecoli,"h",false)}
+    ${resultCard("mot",{mot:"+"},ORG.ecoli,"h",false)}
+    ${resultCard("nal",{nal:"S"},ORG.ecoli,"h",false)}
+  </div>`;
+}
+function showDeck(){
+  const r = run();
+  modal(`<h2>Lab kit</h2><p class="muted">${r.deck.length} tests owned.</p>
+    <table class="ct two">${r.deck.map(t=>`<tr><td class="v">$${cardCost(t)}</td><td><b>${esc(TESTS[t].name)}</b><br><span class="muted">${esc(TESTS[t].desc)}</span></td></tr>`).join("")}</table>`);
+}
+function showUps(){
+  const r = run(); const keys = Object.keys(r.ups);
+  modal(`<h2>Upgrades</h2>${keys.length ? `<table class="ct two">${keys.map(k=>`<tr><td class="v">×${r.ups[k]}</td><td><b>${UPGRADES[k].name}</b><br><span class="muted">${k==="disc" ? "Discounted: "+Object.entries(r.disc).map(([t,n])=>`${TESTS[t].name} −${n}`).join(", ") : UPGRADES[k].desc}</span></td></tr>`).join("")}</table>` : `<p class="muted">None yet. Pick upgrades after cases.</p>`}`);
+}
+
+function render(){
+  const app = $("#app");
+  let html;
+  if(UI.screen==="run" && S.run){
+    const r = S.run;
+    html = r.screen==="room" ? screenRoom() : (r.screen==="reward"||r.screen==="break") ? screenReward() : screenMap();
+  }
+  else if(UI.screen==="codex") html = screenCodex();
+  else if(UI.screen==="help") html = screenHelp();
+  else if(UI.screen==="end") html = screenEnd();
+  else { UI.screen="title"; html = screenTitle(); }
+  app.innerHTML = html;
+  renderModal();
+}
+
+/* ============================ EVENTS ============================ */
+const ACT = {
+  newrun(v){
+    if(S.run){ modal(`<h2>Abandon run?</h2><p>Your current run on ${FLOORS[S.run.floor].name} will be lost.</p>`, [{label:"Abandon & start", cls:"pink", fn:()=>newRun(v)},{label:"Cancel", cls:"ghost"}]); return; }
+    newRun(v);
+  },
+  continue(){ UI.screen="run"; render(); window.scrollTo(0,0); },
+  title(){ UI.screen="title"; render(); window.scrollTo(0,0); },
+  codex(){ UI.prev = UI.screen; UI.screen="codex"; render(); window.scrollTo(0,0); },
+  help(){ UI.prev = UI.screen; UI.screen="help"; render(); window.scrollTo(0,0); },
+  back(){ UI.screen = (UI.prev && UI.prev!=="codex" && UI.prev!=="help") ? UI.prev : "title"; if(UI.screen==="run" && !S.run) UI.screen="title"; render(); window.scrollTo(0,0); },
+  entry(v){ codexEntry(v); },
+  menu(){ modal(`<h2>Menu</h2><p class="muted">Your run is saved automatically.</p>`, [{label:"Main menu", fn:()=>ACT.title()},{label:"Codex", fn:()=>ACT.codex()},{label:"How to play", fn:()=>ACT.help()},{label:"Close", cls:"ghost"}]); },
+  reset(){ modal(`<h2>Reset save?</h2><p>Deletes Codex, unlocked floors, stats and any run in progress.</p>`, [{label:"Delete everything", cls:"pink", fn:()=>{ S=defaultSave(); save(); UI.screen="title"; render(); }},{label:"Cancel", cls:"ghost"}]); },
+  door(v){ chooseDoor(+v); },
+  play(v){ playCard(v); },
+  sel(v){ UI.sel = UI.sel===v ? null : v; render(); },
+  strike(v){ toggleStrike(v); },
+  id(v){ identify(v); },
+  tosus(){ const e=$("#sus"); if(e) e.scrollIntoView({behavior:"smooth"}); },
+  after(){ afterRoom(); },
+  reward(v){ takeReward(+v); },
+  skip(){ nextLevel(); },
+  deck(){ showDeck(); },
+  ups(){ showUps(); },
+  modalbtn(v){ const fn = modalFns[+v]; closeModal(); if(fn) fn(); },
+  modalbg(){},
+};
+document.addEventListener("click", e=>{
+  const m = e.target.closest(".modal");
+  if(m && e.target===m){ closeModal(); return; }
+  const b = e.target.closest("[data-a]");
+  if(!b || b.disabled) return;
+  if(b.dataset.a==="modalbg") return;
+  const f = ACT[b.dataset.a]; if(f) f(b.dataset.v);
+});
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && UI.modal) closeModal(); });
+render();
+</script>
+</body>
+</html>
